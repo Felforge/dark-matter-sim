@@ -23,7 +23,9 @@ func DisperseToGrid() []Particle {
 	spacing := config.Distance / (numPerSide - 1)
 
 	// Calculate uniform mass
-	mass := (config.MeanDensity * float32(math.Pow(float64(config.Distance), 3))) / float32(config.NumParticles)
+	mass := config.MeanDensity * float32(math.Pow(float64(config.Distance), 3))
+	mass *= float32(math.Pow(float64(config.HubbleParameter), 2))
+	mass /= float32(config.NumParticles)
 
 	// Place particles
 	var x, y, z float32
