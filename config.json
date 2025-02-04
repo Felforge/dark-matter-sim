@@ -1,6 +1,6 @@
 {
     "distanceMegaparsec" : 100,
     "numParticles" : 16777216,
-    "meanDensity" : 7.2e-27,
-    "hubbleParameter" : 67.7
+    "meanDensity" : 1.07e11,
+    "hubbleParameter" : 0.7
 }

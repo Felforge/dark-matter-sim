@@ -1,6 +1,8 @@
 package main
 
-import "math"
+import (
+	"math"
+)
 
 // Particle structure
 type Particle struct {
@@ -19,8 +21,7 @@ func DisperseToGrid() []Particle {
 	particles := []Particle{}
 
 	// Calculate spacing
-	numPerSide := float32(math.Cbrt(float64(config.NumParticles)))
-	spacing := config.Distance / (numPerSide - 1)
+	numPerSide := math.Cbrt(float64(config.NumParticles))
 
 	// Calculate uniform mass
 	mass := config.MeanDensity * float32(math.Pow(float64(config.Distance), 3))
@@ -28,10 +29,12 @@ func DisperseToGrid() []Particle {
 	mass /= float32(config.NumParticles)
 
 	// Place particles
-	var x, y, z float32
-	for x = 0; x < config.Distance; x += spacing {
-		for y = 0; y < config.Distance; y += spacing {
-			for z = 0; z < config.Distance; z += spacing {
+	for i := 0.0; i < numPerSide; i++ {
+		for j := 0.0; j < numPerSide; j++ {
+			for k := 0.0; k < numPerSide; k++ {
+				x := float32(i+0.5) * config.Distance / float32(config.NumParticles)
+				y := float32(j+0.5) * config.Distance / float32(config.NumParticles)
+				z := float32(k+0.5) * config.Distance / float32(config.NumParticles)
 				newParticle := Particle{mass, x, y, z}
 				particles = append(particles, newParticle)
 			}

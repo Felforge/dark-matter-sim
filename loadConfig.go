@@ -59,10 +59,6 @@ func LoadConfig() Config {
 		fmt.Println("Error loading JSON: numParticles must be a cube")
 	}
 
-	// Convert Items to Base Units
-	config.Distance = convertDistance(config.Distance)
-	config.HubbleParameter = convertHubbleParameter(config.HubbleParameter)
-
 	// Return Final
 	return *config
 }
