@@ -15,9 +15,15 @@ type Config struct {
 }
 
 // ConvertDistance converts from megaparsec to meters
-func ConvertDistance(distanceSolar float32) float32 {
+func convertDistance(distanceSolar float32) float32 {
 	conversion := float32(9.69394202136e22 / math.Pi)
 	return distanceSolar * conversion
+}
+
+// isCube checks if a given number is a cube
+func isCube(n int) bool {
+	cubeRoot := math.Cbrt(float64(n))
+	return math.Round(cubeRoot) == cubeRoot
 }
 
 // LoadConfig loads config.json
@@ -41,8 +47,13 @@ func LoadConfig() Config {
 		return *config
 	}
 
+	// Check if NumParticles is a cube
+	if isCube(config.NumParticles) == false {
+		fmt.Println("Error loading JSON: numParticles must be a cube")
+	}
+
 	// Convert Distance to Base Units
-	config.Distance = ConvertDistance(config.Distance)
+	config.Distance = convertDistance(config.Distance)
 
 	// Return Final
 	return *config
