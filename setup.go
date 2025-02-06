@@ -10,6 +10,9 @@ type Particle struct {
 	X    float32
 	Y    float32
 	Z    float32
+	Vx   float32
+	Vy   float32
+	Vz   float32
 }
 
 // DisperseToGrid disperses particles uniformly to a grid
@@ -35,7 +38,7 @@ func DisperseToGrid() []Particle {
 				x := float32(i+0.5) * config.Distance / float32(config.NumParticles)
 				y := float32(j+0.5) * config.Distance / float32(config.NumParticles)
 				z := float32(k+0.5) * config.Distance / float32(config.NumParticles)
-				newParticle := Particle{mass, x, y, z}
+				newParticle := Particle{mass, x, y, z, 0, 0, 0}
 				particles = append(particles, newParticle)
 			}
 		}
