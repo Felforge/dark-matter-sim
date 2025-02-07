@@ -1,6 +1,6 @@
 {
     "distance" : 100.0,
-    "num_particles" : 16777216,
+    "num_particles" : 1953125,
     "mean_density" : 1.07e11,
     "hubble_parameter" : 0.7
 }

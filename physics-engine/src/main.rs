@@ -1,7 +1,7 @@
 mod config;
 use config::load_config;
 
-fn main() {
+fn main(){
     match load_config() {
         Some(config) => {
             println!("{:#?}", config);
