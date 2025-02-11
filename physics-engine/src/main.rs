@@ -1,6 +1,7 @@
 mod config;
 mod setup;
 mod zeldovich;
+mod barnes_hut;
 use config::load_config;
 use config::Config;
 use setup::disperse_to_grid;

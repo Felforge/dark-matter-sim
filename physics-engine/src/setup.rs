@@ -1,12 +1,13 @@
 use crate::config::Config;
 use nalgebra as na;
 
+#[repr(C)]
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Particle {
     pub mass: f64,
-    pub position: na::Vector3<f64>,
-    pub velocity: na::Vector3<f64>,
+    pub position: [f64; 3],
+    pub velocity: [f64; 3],
 }
 
 // Disperse particles uniformly to a grid
@@ -33,8 +34,8 @@ pub fn disperse_to_grid(config: Config) -> Option<Vec<Particle>> {
                 let z = (k as f64 + 0.5) * config.distance / (num_per_side as f64);
                 let new_particle: Particle = Particle {
                     mass: particle_mass,
-                    position: na::Vector3::new(x, y, z),
-                    velocity: na::Vector3::new(0.0, 0.0, 0.0)
+                    position: [x, y, z],
+                    velocity: [0.0, 0.0, 0.0]
                 };
                 particles.push(new_particle);
             }
@@ -44,3 +45,5 @@ pub fn disperse_to_grid(config: Config) -> Option<Vec<Particle>> {
     // Return completed vector of particles
     Some(particles)
 }
+
+// Disperse particles in glass configuration
