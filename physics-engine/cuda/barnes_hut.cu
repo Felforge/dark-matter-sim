@@ -9,89 +9,162 @@ struct Particle {
     double mass;
     double position[3];
     double velocity[3];
+    double acceleration[3];
 };
 
-class Octree {
+class BarnesHut {
     public:
-        int numBodies;
-        Particle* bodies;
         double mass = 0;
-        double bounds[3][2]; // 3x2 Matrix
         double cm[3]; // Center of mass
-        Octree* children[8];
 
-        __host__ __device__ Octree(int inpNumBodies, Particle* inpBodies, double inpBounds[3][2], double inpMinDistance=1e-10) {
+        // Constructor
+        BarnesHut(int inpNumBodies, Particle* inpBodies, double inpBounds[3][2]) {
             numBodies = inpNumBodies;
-            bodies = inpBodies;
-            cm[0] = cm[1] = cm[2] = 0.0;
-            mass = 0.0;
-            minDistance = inpMinDistance;
-
             for (int i = 0; i < 3; i++) {
                 bounds[i][0] = inpBounds[i][0];
                 bounds[i][1] = inpBounds[i][1];
             }
+            mass = 0;
+            cm[0] = cm[1] = cm[2] = 0;
 
-            if (numBodies > 0) {
-                if (checkAllSamePoint(numBodies, inpMinDistance)) {
-                    for (int i = 0; i < numBodies; i++) {
-                        mass += bodies[i].mass;
-                        for (int j = 0; j < 3; j++) {
-                            cm[j] += bodies[i].mass * bodies[i].position[j];
-                        }
-                    }
-                    for (int j = 0; j < 3; j++) {
-                        cm[j] /= mass;
-                    }
-                }
-            }
-            else {
-                children = createChildren();
+            // Allocate GPU memory to dBodies
+            cudaMallocManaged(&dBodies, numBodies * sizeof(Particle));
+
+            // Copy Bodies from CPU to GPU
+            cudaMemcpy(dBodies, inpBodies, numBodies * sizeof(Particle), cudaMemcpyHostToDevice);
+
+            // Number of threads per block
+            int threads = 256;
+
+            // Computer the number of thread blocks needed
+            int blocks = (numBodies + threads - 1) / threads;
+
+            // Construct the octree in parallel on the GPU
+            // Each thread assigns a body to the tree using atomic operations
+            constructTree<<<blocks, threads>>>(dBodies, this, numBodies); // Function not made yet
+
+            // Wait for the octree construction to finish
+            cudaDeviceSynchronize(); 
+
+            // Normalize center of mass
+            // The mass was accumulated by "construct_tree"
+            for (int i = 0; i < 3; i++) {
+                cm[i] /= mass;
             }
         }
+
+        // Destructor
+        ~BarnesHut() {
+            // Free GPU memory from dBodies
+            cudaFree(dBodies);
+        }
+
     private:
+        int numBodies;
+        Particle* bodies;
+        double bounds[3][2]; // 3x2 Matrix
+        Octree* children[8];
         // Needed for checking if everything is on the same point
         double minDistance;
+        // Needed to check if everything is on the same point (edge case)
+        bool allSamePoint;
 
-        __host__ __device__ bool checkAllSamePoint(double inpMinDistance) {
-            // Zero body case is caught earlier
-            if (numBodies == 1) {
-                retunr true;
+        __device__ double getDistance(double initial[3], double final[3]) {
+            double dx = final[0] - initial[0];
+            double dy = final[1] - initial[1];
+            double dz = final[2] - initial[2];
+            return sqrt(dx * dx + dy * dy + dz * dz);
+        }
+
+        __global__ void constructTree(Particle* inpBodies, BarnesHut* tree, int inpNumBodies) {
+            // Calculate the global thread index
+            // Each thread gets a unique "idx" to work on a different particle
+            int idx = threadIdx.x + blockIdx.x * blockDim.x;
+
+            // Ensure the thread index is within bounds
+            if (idx >= inpNumBodies) {
+                return;
             }
 
-            Particle first = bodies[0];
-            for (int i = 1; i < numBodies; i++) {
-                for (int j = 1; j < numBodies; j++) {
-                    if (fabs(bodies[i].position[j] - first.position[j]) >= minDistance) {
-                        return false;
+            // Retrieve the particle this thread is responsible for
+            Particle& particle = inpBodies[idx];
+
+            // Update total mass
+            // atomicAdd is needed as multiple threads are adding at once
+            atomicAdd(&tree->mass, body.m);
+
+            // Add to center of mass
+            // Must be divided later by total mass
+            for (int i = 0; i < 3; i++) {
+                atomicAdd(&tree->cm[i], body.cm[i]);
+            }
+        }
+
+        // Mode takes either 1.0 (attract) or -1.0 (repel)
+        // Inverse Gravitational Force is needed for Glass Configuartion
+        __global__ void computeForces(Particle* inpBodies, BarnesHut* tree, int inpBodyCount, double theta, double mode=1.0) {
+            // Calculate the global thread index
+            // Each thread gets a unique "idx" to work on a different particle
+            int idx = threadIdx.x + blockIdx.x * blockDim.x;
+
+            // Ensure the thread index is within bounds
+            if (idx >= tree->numBodies) {
+                return;
+            }
+            Particle& p = inpBodies[idx];
+
+            // Declare empty acceleration vector fields
+            double a[3] = {0.0, 0.0, 0.0};
+
+            // Set an explicit stack depth of 64 (even this should be way too much)
+            BarnesHut* stack[64];
+            int stackTop = 0;
+
+            // Start stack with tree root node
+            stack[stackTop++] = tree;
+
+            // Iterate through whole stack
+            while (stackTop > 0) {
+                // Pop a node from the stack
+                BarnesHut* node = stack[stackTop--];
+
+                // Catch zero cases
+                if (node->mass == 0 || (node->cm[0] == p.position[0] && node->cm[1] == b.position[1] && node->cm[2] == b.position[2])) {
+                    continue;
+                }
+
+                double d = getDistance(p.position, cm);
+                double s = node->bound[0][1] - node->bound[0][0];
+
+                // Barnes-Hut assumes sufficiently far away enough particles to be in larger nodes
+                // The condition that needs to be met is s / d < theta
+                if ((s / d < theta) || node->numBodies == 1) {
+                    double a = (mode * G * p.mass * node->mass) / (d * d * m);
+                    for (int i = 0; i < 3; i++) {
+                        a[i] += a * (cm[i] - node->position[i]) / d;
+                    }
+                } else {
+                    // Push all nodes that do that satisfy the above 
+                    // condition further into the stack for processing
+                    if (node->children[0] != nullptr) {
+                        // If the first item is null all others must be
+                        for (int i = 0; i < 8; i++) {
+                            stack[stackTop++] = node->children[i];
+                        }
                     }
                 }
             }
-            return true;
-        }
-
-        // Create children Octree classes in the already created object
-        __host__ __device__ void createChildren() {
-            // Subdivide the space into 8 Octants
-            for (int i = 0; i < 8; i++) {
-                double newBounds[3][2];
-                getSubdivisionBounds(i, newBounds); // Get bounds for current octant
-
-                // int childNumBodies;
-                // Particle* childParticles = subdivideParticles(bodies, numBodies, newBounds, &childNumBodies);
-
-                // Octree child = Octree(subdivideParticles(bodies, numBodies, newBounds), newBounds, minDistance);
-                // mass += child.mass;
-                // for (int j = 0; j < 3; j++) {
-                //     cm[j] += child.mass * child.cm[j];
-                // }
-                // children[i] = child;
-            }
-
-            if (mass > 0) {
-                for (int i = 0; i < 3; i++) {
-                    cm[i] /= mass;
-                }
-            }
+            // Add acceleration into particle
+            p.acceleratin = a;
         }
 }
+
+// ADD THIS TYPE OF THING FOR FORCES
+//int threads = 256;
+
+            // Computer the number of thread blocks needed
+            //int blocks = (numBodies + threads - 1) / threads;
+
+            // Construct the octree in parallel on the GPU
+            // Each thread assigns a body to the tree using atomic operations
+            //constructTree<<<blocks, threads>>>(dBodies, this, numBodies); // Function not made yet

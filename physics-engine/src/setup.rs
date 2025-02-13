@@ -1,5 +1,4 @@
 use crate::config::Config;
-use nalgebra as na;
 
 #[repr(C)]
 #[allow(dead_code)]
@@ -8,6 +7,7 @@ pub struct Particle {
     pub mass: f64,
     pub position: [f64; 3],
     pub velocity: [f64; 3],
+    pub acceleration: [f64; 3],
 }
 
 // Disperse particles uniformly to a grid
@@ -35,7 +35,8 @@ pub fn disperse_to_grid(config: Config) -> Option<Vec<Particle>> {
                 let new_particle: Particle = Particle {
                     mass: particle_mass,
                     position: [x, y, z],
-                    velocity: [0.0, 0.0, 0.0]
+                    velocity: [0.0, 0.0, 0.0],
+                    acceleration: [0.0, 0.0, 0.0]
                 };
                 particles.push(new_particle);
             }
