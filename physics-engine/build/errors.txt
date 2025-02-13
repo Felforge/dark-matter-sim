@@ -1,0 +1,163 @@
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+barnesHut.cu
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(102): error: A __global__ function or function template cannot be a member function
+          __declspec(__global__) void constructTree(Particle* inpBodies, BarnesHut* tree, int inpNumBodies) {
+                     ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(163): error: A __global__ function or function template cannot be a member function
+          __declspec(__global__) void computeForcesInternal(Particle* inpBodies, BarnesHut* tree, int inpBodyCount, double theta, double mode=1.0) {
+                     ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(34): error: identifier "dBodies" is undefined
+              cudaMallocManaged(&dBodies, numBodies * sizeof(Particle));
+                                 ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(62): error: identifier "dBodies" is undefined
+              cudaFree(dBodies);
+                       ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(72): error: nonstandard form for taking the address of a member function
+              computeForcesInternal<<blocks, threads>>(bodies, this, numBodies, theta, mode);
+              ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(72): error: expression must have integral or unscoped enum type
+              computeForcesInternal<<blocks, threads>>(bodies, this, numBodies, theta, mode);
+              ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(72): warning #174-D: expression has no effect
+              computeForcesInternal<<blocks, threads>>(bodies, this, numBodies, theta, mode);
+                                                       ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(72): warning #174-D: expression has no effect
+              computeForcesInternal<<blocks, threads>>(bodies, this, numBodies, theta, mode);
+                                                       ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(72): warning #174-D: expression has no effect
+              computeForcesInternal<<blocks, threads>>(bodies, this, numBodies, theta, mode);
+                                                       ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(72): warning #174-D: expression has no effect
+              computeForcesInternal<<blocks, threads>>(bodies, this, numBodies, theta, mode);
+                                                       ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(72): error: expression must have integral or unscoped enum type
+              computeForcesInternal<<blocks, threads>>(bodies, this, numBodies, theta, mode);
+                                                      ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(79): error: identifier "dBodies" is undefined
+              cudaMemcpy(bodies, dBodies, numBodies * sizeof(Particle), cudaMemcpyDeviceToHost);
+                                 ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(122): error: operand types are incompatible ("double *" and "double")
+                  if (particle.x > xMid) {
+                                 ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(126): error: operand types are incompatible ("double *" and "double")
+                  if (particle.y > tree->ycm) {
+                                 ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(130): error: operand types are incompatible ("double *" and "double")
+                  if (particle.z > tree->zcm) {
+                                 ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(151): error: no instance of overloaded function "atomicAdd" matches the argument list
+            argument types are: (double *, double *)
+                  atomicAdd(&tree->mass, particle.mass);
+                  ^
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.8\include\crt\sm_90_rt.h(112): note #3326-D: function "atomicAdd(float4 *, float4)" does not match because argument #1 does not match parameter
+  static __declspec(__device__) __inline float4 atomicAdd(float4 *__address, float4 val) { }
+                                                ^
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.8\include\crt\sm_90_rt.h(109): note #3326-D: function "atomicAdd(float2 *, float2)" does not match because argument #1 does not match parameter
+  static __declspec(__device__) __inline float2 atomicAdd(float2 *__address, float2 val) { }
+                                                ^
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.8\include\sm_60_atomic_functions.h(93): note #3326-D: function "atomicAdd(double *, double)" does not match because argument #2 does not match parameter
+  static __inline __declspec(__device__) double atomicAdd(double *address, double val) { }
+                                                ^
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.8\include\sm_20_atomic_functions.h(88): note #3326-D: function "atomicAdd(float *, float)" does not match because argument #1 does not match parameter
+  static __inline __declspec(__device__) float atomicAdd(float *address, float val) { }
+                                               ^
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.8\include\device_atomic_functions.h(169): note #3326-D: function "atomicAdd(unsigned long long *, unsigned long long)" does not match because argument #1 does not match parameter
+  static __inline __declspec(__device__) unsigned long long int atomicAdd(unsigned long long int *address, unsigned long long int val) { }
+                                                                ^
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.8\include\device_atomic_functions.h(91): note #3326-D: function "atomicAdd(unsigned int *, unsigned int)" does not match because argument #1 does not match parameter
+  static __inline __declspec(__device__) unsigned int atomicAdd(unsigned int *address, unsigned int val) { }
+                                                      ^
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.8\include\device_atomic_functions.h(89): note #3326-D: function "atomicAdd(int *, int)" does not match because argument #1 does not match parameter
+  static __inline __declspec(__device__) int atomicAdd(int *address, int val) { }
+                                             ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(155): error: expression must have arithmetic or unscoped enum type
+                  atomicAdd(&tree->xcm, particle.mass * particle.x);
+                                        ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(155): error: expression must have arithmetic or unscoped enum type
+                  atomicAdd(&tree->xcm, particle.mass * particle.x);
+                                                        ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(156): error: expression must have arithmetic or unscoped enum type
+                  atomicAdd(&tree->ycm, particle.mass * particle.y);
+                                        ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(156): error: expression must have arithmetic or unscoped enum type
+                  atomicAdd(&tree->ycm, particle.mass * particle.y);
+                                                        ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(157): error: expression must have arithmetic or unscoped enum type
+                  atomicAdd(&tree->zcm, particle.mass * particle.z);
+                                        ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(157): error: expression must have arithmetic or unscoped enum type
+                  atomicAdd(&tree->zcm, particle.mass * particle.z);
+                                                        ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(193): error: operand types are incompatible ("double" and "double *")
+                  if (node->mass == 0 || (node->xcm == p.x && node->ycm == p.y && node->zcm == p.z)) {
+                                                    ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(193): error: operand types are incompatible ("double" and "double *")
+                  if (node->mass == 0 || (node->xcm == p.x && node->ycm == p.y && node->zcm == p.z)) {
+                                                                        ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(193): error: operand types are incompatible ("double" and "double *")
+                  if (node->mass == 0 || (node->xcm == p.x && node->ycm == p.y && node->zcm == p.z)) {
+                                                                                            ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(197): error: argument of type "double *" is incompatible with parameter of type "double"
+                  double d = getDistance(p.x, p.y, p.z, node->xcm, node->ycm, node->zcm);
+                                         ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(197): error: argument of type "double *" is incompatible with parameter of type "double"
+                  double d = getDistance(p.x, p.y, p.z, node->xcm, node->ycm, node->zcm);
+                                              ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(197): error: argument of type "double *" is incompatible with parameter of type "double"
+                  double d = getDistance(p.x, p.y, p.z, node->xcm, node->ycm, node->zcm);
+                                                   ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(204): error: class "BarnesHut" has no member "x"
+                      ax += a * (xcm - node->x) / d;
+                                             ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(205): error: class "BarnesHut" has no member "y"
+                      ay += a * (ycm - node->y) / d;
+                                             ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(206): error: class "BarnesHut" has no member "z"
+                      az += a * (zcm - node->z) / d;
+                                             ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(219): error: a value of type "double" cannot be assigned to an entity of type "double *"
+              p.ax = ax;
+                   ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(220): error: a value of type "double" cannot be assigned to an entity of type "double *"
+              p.ay = ay;
+                   ^
+
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\physics-engine\cuda\barnesHut.cu(221): error: a value of type "double" cannot be assigned to an entity of type "double *"
+              p.az = az;
+                   ^
+
+30 errors detected in the compilation of "cuda/barnesHut.cu".
