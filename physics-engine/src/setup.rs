@@ -5,9 +5,9 @@ use crate::config::Config;
 #[derive(Debug, Copy, Clone)]
 pub struct Particle {
     pub mass: f64,
-    pub position: [f64; 3],
-    pub velocity: [f64; 3],
-    pub acceleration: [f64; 3],
+    pub x: f64, pub y: f64, pub z: f64,
+    pub vx: f64, pub vy: f64, pub vz: f64,
+    pub ax: f64, pub ay: f64, pub az: f64,
 }
 
 // Disperse particles uniformly to a grid
@@ -34,9 +34,9 @@ pub fn disperse_to_grid(config: Config) -> Option<Vec<Particle>> {
                 let z = (k as f64 + 0.5) * config.distance / (num_per_side as f64);
                 let new_particle: Particle = Particle {
                     mass: particle_mass,
-                    position: [x, y, z],
-                    velocity: [0.0, 0.0, 0.0],
-                    acceleration: [0.0, 0.0, 0.0]
+                    x: x, y: y, z: z,
+                    vx: 0.0, vy: 0.0, vz: 0.0,
+                    ax: 0.0, ay: 0.0, az: 0.0,
                 };
                 particles.push(new_particle);
             }
