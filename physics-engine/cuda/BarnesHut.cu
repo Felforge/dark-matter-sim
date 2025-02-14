@@ -32,9 +32,10 @@ class BarnesHut {
         bool allSamePoint;
 
         // For CUDA stuff
+        double octantBounds[8][3][2];
         Particle* dBodies;
-        double dOctantBounds[8][3][2];
-        Particle* dOctantLists[8];
+        int* dOctantCounts;
+        Particle** dOctantLists;
 
         // Constructor
         BarnesHut(int inpNumBodies, Particle* inpBodies, double inpBounds[3][2]) {
@@ -64,6 +65,9 @@ class BarnesHut {
             }
             cudaFree(dBodies);
             cudaFree(dOctantCounts);
+            for (int i = 0; i < 8; i++) {
+                cudaFree(dOctantLists[i]);
+            }
             cudaFree(dOctantLists);
         }
 
@@ -80,10 +84,6 @@ class BarnesHut {
 
             // Wait for the octree construction to finish
             cudaDeviceSynchronize();
-
-            // Copy Data from GPU to CPU
-            // May or may not be needed
-            cudaMemcpy(dBodies, dBodies, numBodies * sizeof(Particle), cudaMemcpyDeviceToHost);
         }
 
     private:
@@ -135,12 +135,12 @@ class BarnesHut {
             }
 
             // Allocate memory for octant lists
+            cudaMallocManaged(&dOctantLists, 8 * sizeof(Particle*));
             for (int i = 0; i < 8; i++) {
                 cudaMallocManaged(&dOctantLists[i], numBodies * sizeof(Particle));
             }
 
             // Allocate memory for counters
-            int* dOctantCounts;
             cudaMallocManaged(&dOctantCounts, 8 * sizeof(int));
             cudaMemset(dOctantCounts, 0, 8 * sizeof(int));
 
@@ -150,9 +150,16 @@ class BarnesHut {
             createChildrenKernel<<<blocks, threads>>>(dBodies, numBodies, dOctantLists, dOctantCounts, mid);
             cudaDeviceSynchronize();
 
+            // Copy dOctantCounts to CPU
+            int hOctantCounts[8];  // Host-side array
+            cudaMemcpy(hOctantCounts, dOctantCounts, 8 * sizeof(int), cudaMemcpyDeviceToHost);
+            cudaDeviceSynchronize();  // Ensure copy is complete before using it
+
             // Create children instances
             for (int i = 0; i < 8; i++) {
-                children[i] = new BarnesHut(dOctantCounts[i], dOctantLists[i], octantBounds[i]);
+                Particle* hOctantList;
+                cudaMemcpy(hOctantList, dOctantLists[i], hOctantCounts[i] * sizeof(Particle), cudaMemcpyDeviceToHost);
+                children[i] = new BarnesHut(hOctantCounts[i], dOctantLists[i], octantBounds[i]);
             }
         }
 };
@@ -225,6 +232,11 @@ __global__ void computeForcesKernel(Particle* inpBodies, BarnesHut* tree, double
 
     // Iterate through whole stack
     while (stackTop > 0) {
+        // Boundary condition
+        if (stackTop >= MAX_STACK_SIZE) {
+            return;
+        }
+
         // Pop a node from the stack
         BarnesHut* node = stack[stackTop--];
 
