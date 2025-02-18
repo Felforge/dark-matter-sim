@@ -11,6 +11,11 @@ struct Particle {
     double ax, ay, az;
 };
 
+//Everything is pre-declared to avoid errors
+class BarnesHut;
+__global__ void createChildrenKernel(Particle* inpBodies, int inpNumBodies, Particle* octantLists[8], int* octantCounts, double mid[3]);
+__global__ void computeForcesKernel(Particle* inpBodies, BarnesHut* tree, double theta, double mode=1.0);
+
 class BarnesHut {
     public:
         // Total mass
@@ -27,9 +32,6 @@ class BarnesHut {
 
         // Needed for checking if everything is on the same point
         double minDistance;
-
-        // Needed to check if everything is on the same point (edge case)
-        bool allSamePoint;
 
         // For CUDA stuff
         double octantBounds[8][3][2];
@@ -80,7 +82,7 @@ class BarnesHut {
             int blocks = (numBodies + threads - 1) / threads;
             
             // Calculate forces in parallel on the GPU
-            computeForcesKernel<<<blocks, threads>>>(dBodies, this, numBodies, theta, mode);
+            computeForcesKernel<<<blocks, threads>>>(dBodies, this, theta, mode);
 
             // Wait for the octree construction to finish
             cudaDeviceSynchronize();
@@ -156,8 +158,8 @@ class BarnesHut {
             cudaDeviceSynchronize();  // Ensure copy is complete before using it
 
             // Create children instances
+            Particle* hOctantList;
             for (int i = 0; i < 8; i++) {
-                Particle* hOctantList;
                 cudaMemcpy(hOctantList, dOctantLists[i], hOctantCounts[i] * sizeof(Particle), cudaMemcpyDeviceToHost);
                 children[i] = new BarnesHut(hOctantCounts[i], dOctantLists[i], octantBounds[i]);
             }
@@ -206,7 +208,7 @@ __global__ void createChildrenKernel(Particle* inpBodies, int inpNumBodies, Part
 
 // Mode takes either 1.0 (attract) or -1.0 (repel)
 // Inverse Gravitational Force is needed for Glass Configuartion
-__global__ void computeForcesKernel(Particle* inpBodies, BarnesHut* tree, double theta, double mode=1.0) {
+__global__ void computeForcesKernel(Particle* inpBodies, BarnesHut* tree, double theta, double mode) {
     // Calculate the global thread index
     // Each thread gets a unique "idx" to work on a different particle
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
