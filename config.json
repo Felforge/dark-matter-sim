@@ -3,5 +3,7 @@
     "num_particles" : 1953125,
     "mean_density" : 1.07e11,
     "hubble_parameter" : 0.7,
-    "barnes_hut_theta" : 0.5
+    "barnes_hut_theta" : 0.5,
+    "time_step_parameter" : 0.05,
+    "softening_divisor" : 1.75
 }

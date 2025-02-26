@@ -1,9 +1,9 @@
 #include <cuda_runtime.h>
 #include <cmath>
 
-#define G 6.67430e-11f
+#define G 6.67428e-11f
 
-// Copied from rust program
+// Copied from go program
 struct Particle {
     double mass;
     double x, y, z;
@@ -144,7 +144,7 @@ class BarnesHut {
 
             // Allocate memory for counters
             cudaMallocManaged(&dOctantCounts, 8 * sizeof(int));
-            cudaMemset(dOctantCounts, 0, 8 * sizeof(int));
+            cudaMemset(&dOctantCounts, 0, 8 * sizeof(int));
 
             // Launch CUDA Kernel
             int threads = 256;
@@ -154,13 +154,13 @@ class BarnesHut {
 
             // Copy dOctantCounts to CPU
             int hOctantCounts[8];  // Host-side array
-            cudaMemcpy(hOctantCounts, dOctantCounts, 8 * sizeof(int), cudaMemcpyDeviceToHost);
+            cudaMemcpy(&hOctantCounts, &dOctantCounts, 8 * sizeof(int), cudaMemcpyDeviceToHost);
             cudaDeviceSynchronize();  // Ensure copy is complete before using it
 
             // Create children instances
             Particle* hOctantList;
             for (int i = 0; i < 8; i++) {
-                cudaMemcpy(hOctantList, dOctantLists[i], hOctantCounts[i] * sizeof(Particle), cudaMemcpyDeviceToHost);
+                cudaMemcpy(&hOctantList, &dOctantLists[i], hOctantCounts[i] * sizeof(Particle), cudaMemcpyDeviceToHost);
                 children[i] = new BarnesHut(hOctantCounts[i], dOctantLists[i], octantBounds[i]);
             }
         }
