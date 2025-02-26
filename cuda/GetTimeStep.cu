@@ -9,8 +9,8 @@ struct Particle {
     double ax, ay, az;
 };
 
-double* dA = 0.0;
-double* dD = 0.0;
+__device__ double* dA = 0.0;
+__device__ double* dD = 0.0;
 
 __global__ void accumulateItemsKernel(Particle* particles, int numParticles) {
     // Calculate the global thread index
