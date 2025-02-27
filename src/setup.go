@@ -2,6 +2,7 @@ package main
 
 import (
 	"math"
+	"math/rand"
 )
 
 // Particle structure
@@ -52,7 +53,27 @@ func DisperseToGrid() []Particle {
 	return particles
 }
 
-// Disperare particles in a glass configuration
-// func CreateGlass() []Particle {
+// CreateGlass disperses particles in a glass configuration
+func CreateGlass() []Particle {
+	// Load config file
+	config := LoadConfig()
 
-// }
+	// Create particles list
+	particles := []Particle{}
+
+	// Calculate uniform mass
+	mass := config.MeanDensity * config.Distance * config.Distance * config.Distance
+	mass *= config.HubbleParameter * config.HubbleParameter
+	mass /= float64(config.NumParticles)
+
+	// Disperse particles randomly
+	for i := 0; i < config.NumParticles; i++ {
+		x := rand.Float64() * config.Distance
+		y := rand.Float64() * config.Distance
+		z := rand.Float64() * config.Distance
+		newParticle := Particle{mass, x, y, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+		particles = append(particles, newParticle)
+	}
+}
+
+// Use Yoshida integration to implement antigravity

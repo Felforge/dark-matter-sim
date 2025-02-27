@@ -53,7 +53,7 @@ class BarnesHut {
 
             // Move tree to GPU after construction
             cudaMallocManaged(&dBodies, numBodies * sizeof(Particle));
-            cudaMemcpy(dBodies, inpBodies, numBodies * sizeof(Particle), cudaMemcpyHostToDevice);
+            cudaMemcpy(&dBodies, &inpBodies, numBodies * sizeof(Particle), cudaMemcpyHostToDevice);
         }
 
         // Destructor
@@ -272,4 +272,26 @@ __global__ void computeForcesKernel(Particle* inpBodies, BarnesHut* tree, double
     p.ax = ax;
     p.ay = ay;
     p.az = az;
+}
+
+// C-compatible functions for cgo
+extern "C" {
+    BarnesHut* createBarnesHut(int numBodies, Particle* bodies, double* bounds) {
+        // Map the pointer to the first element onto a 3x2 array
+        double (*allBounds)[2] = (double (*)[2])bounds;
+        return new BarnesHut(numBodies, bodies, allBounds);
+    }
+
+    void destroyBarnesHut(BarnesHut* tree) {
+        delete tree;
+    }
+
+    void computeBarnesHutForces(BarnesHut* tree, double theta, double mode) {
+        tree->computeForces(theta, mode);
+    }
+
+    // Function to copy particles list from device to host
+    void copyParticlesToHost(BarnesHut* tree, int numBodies, Particle* hBodies) {
+        cudaMemcpy(&hBodies, &tree->dBodies, tree->numBodies * sizeof(Particle), cudaMemcpyDeviceToHost);
+    }
 }
