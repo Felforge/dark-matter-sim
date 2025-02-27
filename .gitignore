@@ -44,4 +44,6 @@ physics-engine/Cargo.lock
 #.idea/
 
 .DS_Store
-.vscode
+
+# VSCode settings
+settings.json
