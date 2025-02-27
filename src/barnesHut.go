@@ -16,7 +16,7 @@ typedef struct {
 typedef struct BarnesHut BarnesHut;
 
 // Declare external functions
-extern BarnesHut* createBarnesHut(int numBodies, Particle* bodies, double* bounds);
+extern BarnesHut* createBarnesHut(int numBodies, Particle* bodies, double bounds[3][2]);
 extern void destroyBarnesHut(BarnesHut* tree);
 extern void computeBarnesHutForces(BarnesHut* tree, double theta, double mode);
 extern void copyParticlesToHost(BarnesHut* tree, int numBodies, Particle* hBodies);
@@ -47,7 +47,7 @@ func computeForces(distance float64, particles []Particle, theta float64, mode f
 		bounds[i][0] = 0.0
 		bounds[i][1] = C.double(distance)
 	}
-	boundsPtr := (*C.double)(unsafe.Pointer(&bounds[0][0]))
+	boundsPtr := (*[2]C.double)(unsafe.Pointer(&bounds[0]))
 
 	// C-compatibel list of bodies
 	numBodies := len(particles)

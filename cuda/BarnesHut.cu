@@ -276,10 +276,8 @@ __global__ void computeForcesKernel(Particle* inpBodies, BarnesHut* tree, double
 
 // C-compatible functions for cgo
 extern "C" {
-    BarnesHut* createBarnesHut(int numBodies, Particle* bodies, double* bounds) {
-        // Map the pointer to the first element onto a 3x2 array
-        double (*allBounds)[2] = (double (*)[2])bounds;
-        return new BarnesHut(numBodies, bodies, allBounds);
+    BarnesHut* createBarnesHut(int numBodies, Particle* bodies, double bounds[3][2]) {
+        return new BarnesHut(numBodies, bodies, bounds);
     }
 
     void destroyBarnesHut(BarnesHut* tree) {
