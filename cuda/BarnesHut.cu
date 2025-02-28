@@ -274,22 +274,132 @@ __global__ void computeForcesKernel(Particle* inpBodies, BarnesHut* tree, double
     p.az = az;
 }
 
-// C-compatible functions for cgo
-extern "C" {
-    BarnesHut* createBarnesHut(int numBodies, Particle* bodies, double bounds[3][2]) {
-        return new BarnesHut(numBodies, bodies, bounds);
-    }
+// Yoshida constants
+const double D1 = 1.0 / (2.0 - cbrt(2.0));
+const double D2 = -1.0 * cbrt(2.0) / (2.0 - cbrt(2.0));
+const double C1 = D1 / 2.0;
+const double C2 = (D1 + D2) / 2.0;
 
-    void destroyBarnesHut(BarnesHut* tree) {
-        delete tree;
-    }
+// Kernel to update position
+// Each step has a slightly different multiplier
+__global__ void yoshidaPositionKernel(Particle* particles, double dt, double multiplier) {
+    // Calculate the global thread index
+    // Each thread gets a unique "idx" to work on a different particle
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
 
-    void computeBarnesHutForces(BarnesHut* tree, double theta, double mode) {
-        tree->computeForces(theta, mode);
+    // Ensure the thread index is within bounds
+    if (idx >= tree->numBodies) {
+        return;
     }
+    Particle& p = particles[idx];
 
-    // Function to copy particles list from device to host
-    void copyParticlesToHost(BarnesHut* tree, int numBodies, Particle* hBodies) {
-        cudaMemcpy(&hBodies, &tree->dBodies, tree->numBodies * sizeof(Particle), cudaMemcpyDeviceToHost);
+    // Apply formula
+    p.x += multiplier * p.vx * dt;
+    p.y += multiplier * p.vy * dt;
+    p.z += multiplier * p.vz * dt;
+}
+
+// Kernel to update velocity
+// Each step has a slightly different multiplier
+__global__ void yoshidaVelocityKernel(Particle* particles, double dt, double multiplier) {
+    // Calculate the global thread index
+    // Each thread gets a unique "idx" to work on a different particle
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+
+    // Ensure the thread index is within bounds
+    if (idx >= tree->numBodies) {
+        return;
+    }
+    Particle& p = particles[idx];
+
+    // Apply formula
+    p.vx += multiplier * p.ax * dt;
+    p.vy += multiplier * p.ay * dt;
+    p.vz += multiplier * p.az * dt;
+}
+
+// Step Yoshida Position
+void stepYoshidaPosition(Particle* particles, double dt, double multiplier, int threads, int blocks) {
+    yoshidaPositionKernel<<<blocks, threads>>>(particles, dt, multiplier);
+    cudaDeviceSynchronize();
+}
+
+// Step Yoshida Velocity
+void stepYoshidaVelocity(int numParticles, Particle* particles, double bounds[3][2], double dt, double multiplier, double theta, double mode, int threads, int blocks) {
+    BarnesHut* tree = new BarnesHut(numParticles, particles, bounds);
+    tree->computeForces(theta, mode);
+    delete tree;
+    yoshidaVelocityKernel<<<blocks, threads>>>(particles, dt, D1);
+    cudaDeviceSynchronize();
+}
+
+// Use Yoshida integration to time evolve the particles
+// Doesn't return new list but updates inputted particles
+// Distance is edge length of simulation box
+// Needs to be C to be Go-compatible
+extern "C" { 
+    void applyYoshida(int numParticles, Particle* particles, double distance, double dt, double theta, double mode) {
+        // Copy particles to device
+        Particle* dParticles;
+        cudaMemcpy(&dParticles, &particles, numParticles * sizeof(Particle), cudaMemcpyHostToDevice);
+
+        // Create bounds for later
+        double bounds[3][2];
+        for (int i = 0; i < 3; i++) {
+            bounds[i][0] = 0.0;
+            bounds[i][1] = distance;
+        }
+
+        // Assign number of threads
+        int threads = 256;
+        // Compute the number of thread blocks needed
+        int blocks = (numParticles + threads - 1) / threads;
+
+        // Apply Yoshida
+        // Synchronization is done after everything inside the function
+
+        // Step 1 Position
+        stepYoshidaPosition(particles, dt, C1, threads, blocks);
+
+        // Step 1 Velocity
+        stepYoshidaVelocity(numParticles, particles, bounds, dt, D1, theta, mode, threads, blocks);
+
+        // Step 2 Position
+        stepYoshidaPosition(particles, dt, C2, threads, blocks);
+
+        // Step 2 Velocity
+        stepYoshidaVelocity(numParticles, particles, bounds, dt, D2, theta, mode, threads, blocks);
+
+        // Step 3 Position
+        stepYoshidaPosition(particles, dt, C2, threads, blocks);
+
+        // Step 3 Velocity
+        stepYoshidaVelocity(numParticles, particles, bounds, dt, D1, theta, mode, threads, blocks);
+
+        // Step 4 Position
+        stepYoshidaPosition(particles, dt, C1, threads, blocks);
+
+        // Copy final particles back to host
+        cudaMemcpy(&particles, &dParticles, numBodies * sizeof(Particle), cudaMemcpyDeviceToHost);
     }
 }
+
+// C-compatible functions for cgo
+// extern "C" {
+//     BarnesHut* createBarnesHut(int numBodies, Particle* bodies, double bounds[3][2]) {
+//         return new BarnesHut(numBodies, bodies, bounds);
+//     }
+
+//     void destroyBarnesHut(BarnesHut* tree) {
+//         delete tree;
+//     }
+
+//     void computeBarnesHutForces(BarnesHut* tree, double theta, double mode) {
+//         tree->computeForces(theta, mode);
+//     }
+
+//     // Function to copy particles list from device to host
+//     void copyParticlesToHost(BarnesHut* tree, int numBodies, Particle* hBodies) {
+//         cudaMemcpy(&hBodies, &tree->dBodies, tree->numBodies * sizeof(Particle), cudaMemcpyDeviceToHost);
+//     }
+// }
