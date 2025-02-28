@@ -76,9 +76,17 @@ extern "C" {
         cudaMemcpy(&hA, dA, sizeof(double), cudaMemcpyDeviceToHost);
         cudaMemcpy(&hD, dD, sizeof(double), cudaMemcpyDeviceToHost);
 
-        // Free device variables from memory
-
+        // Solve for softening length
         double softeningLength = hD / softeningDivisor;
-        return timeStepParameter * sqrt(softeningLength / hA);
+
+        // Compute time step
+        double timeStep = timeStepParameter * sqrt(softeningLength / hA);
+
+        // Free device variables from memory
+        cudaFree(hA);
+        cudaFree(hD);
+
+        // Return time step
+        return timeStep;
     }
 }
