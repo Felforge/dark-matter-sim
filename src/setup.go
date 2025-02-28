@@ -74,6 +74,7 @@ func CreateGlass() []Particle {
 		newParticle := Particle{mass, x, y, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 		particles = append(particles, newParticle)
 	}
+	return particles // NOT DONE
 }
 
 // Use Yoshida integration to implement antigravity

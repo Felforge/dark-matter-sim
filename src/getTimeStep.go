@@ -1,7 +1,7 @@
 package main
 
 /*
-#cgo LDFLAGS: -L./libs -lGetTimeStep -lcudart
+#cgo LDFLAGS: -L./../libs -lGetTimeStep -lcudart
 #include <stdlib.h>
 
 typedef struct {
