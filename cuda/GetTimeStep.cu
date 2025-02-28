@@ -83,8 +83,8 @@ extern "C" {
         double timeStep = timeStepParameter * sqrt(softeningLength / hA);
 
         // Free device variables from memory
-        cudaFree(hA);
-        cudaFree(hD);
+        cudaFree(dA);
+        cudaFree(dD);
 
         // Return time step
         return timeStep;
