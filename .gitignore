@@ -4,7 +4,6 @@
 # Binaries for programs and plugins
 *.exe
 *.exe~
-*.dll
 *.so
 *.dylib
 
@@ -47,3 +46,9 @@ physics-engine/Cargo.lock
 
 # VSCode settings
 .vscode/
+
+# DLL stuff
+*.exp
+
+# Other
+hidden/

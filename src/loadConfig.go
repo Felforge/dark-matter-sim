@@ -13,8 +13,9 @@ type Config struct {
 	NumParticles      int     `json:"numParticles"`
 	MeanDensity       float64 `json:"meanDensity"`
 	HubbleParameter   float64 `json:"hubbleParameter"`
-	TimeStepParameter float64 `json:"time_step_parameter"`
-	SofteningDivisor  float64 `json:"softening_divisor"`
+	Theta             float64 `json:"barnesHutTheta"`
+	TimeStepParameter float64 `json:"timeStepParameter"`
+	SofteningDivisor  float64 `json:"softeningDivisor"`
 }
 
 // convertDistance converts from megaparsec to meters
@@ -47,19 +48,13 @@ func convertHubbleParameter(hubbleParameter float64) float64 {
 	return 1000 * hubbleParameter / conversionMPC
 }
 
-// isCube checks if a given number is a cube
-func isCube(n int) bool {
-	cubeRoot := math.Cbrt(float64(n))
-	return math.Round(cubeRoot) == cubeRoot
-}
-
 // LoadConfig loads config.json
 func LoadConfig() Config {
 	// Load initial config
 	config := &Config{}
 
 	// Open Config File
-	file, err := os.Open("config.json")
+	file, err := os.Open("../config.json")
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return *config
@@ -74,14 +69,10 @@ func LoadConfig() Config {
 		return *config
 	}
 
-	// Check if NumParticles is a cube
-	if isCube(config.NumParticles) == false {
-		fmt.Println("Error loading JSON: numParticles must be a cube")
-	}
-
 	// Convert to base units
 	config.Distance = convertDistance(config.Distance)
 	config.MeanDensity = convertDensity(config.MeanDensity, config.HubbleParameter)
+	config.HubbleParameter = convertHubbleParameter(config.HubbleParameter)
 
 	// Return Final
 	return *config

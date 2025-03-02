@@ -5,10 +5,10 @@
 
 // Copied from go program
 struct Particle {
-    double mass;
-    double x, y, z;
-    double vx, vy, vz;
-    double ax, ay, az;
+    double Mass;
+    double X, Y, Z;
+    double Vx, Vy, Vz;
+    double Ax, Ay, Az;
 };
 
 //Everything is pre-declared to avoid errors
@@ -18,6 +18,8 @@ __global__ void computeForcesKernel(Particle* inpBodies, BarnesHut* tree, double
 
 class BarnesHut {
     public:
+        Particle* bodies;
+
         // Total mass
         double mass = 0;
 
@@ -41,6 +43,8 @@ class BarnesHut {
 
         // Constructor
         BarnesHut(int inpNumBodies, Particle* inpBodies, double inpBounds[3][2]) {
+            bodies = inpBodies;
+
             numBodies = inpNumBodies;
             for (int i = 0; i < 3; i++) {
                 bounds[i][0] = inpBounds[i][0];
@@ -92,9 +96,9 @@ class BarnesHut {
         bool allSamePoint(Particle* inpBodies, int inpNumBodies, double minDistance=1e-50) {
             Particle first = inpBodies[0];
             for (int i = 1; i < inpNumBodies; i++) {
-                if (fabs(inpBodies[i].x - first.x) > minDistance &&
-                    fabs(inpBodies[i].y - first.y) > minDistance &&
-                    fabs(inpBodies[i].z - first.z) > minDistance) {
+                if (fabs(inpBodies[i].X - first.X) > minDistance ||
+                    fabs(inpBodies[i].Y - first.Y) > minDistance ||
+                    fabs(inpBodies[i].Z - first.Z) > minDistance) {
                         return false;
                     }
             }
@@ -107,13 +111,13 @@ class BarnesHut {
             }
             if (allSamePoint(inpBodies, inpNumBodies)) {
                 for (int i = 0; i < inpNumBodies; i++) {
-                    mass += inpBodies[i].mass;
+                    mass += inpBodies[i].Mass;
                 }
                 
                 // Center of mass of all will be the same
-                xcm = inpBodies[0].x;
-                ycm = inpBodies[0].y;
-                zcm = inpBodies[0].z;
+                xcm = inpBodies[0].X;
+                ycm = inpBodies[0].Y;
+                zcm = inpBodies[0].Z;
 
             } else {
                 createChildren();
@@ -187,15 +191,15 @@ __global__ void createChildrenKernel(Particle* inpBodies, int inpNumBodies, Part
     Particle& particle = inpBodies[idx];
 
     int octant = 0;
-    if (particle.x > mid[0]) {
+    if (particle.X > mid[0]) {
         // Set first bit to 1
         octant |= 1;
     }
-    if (particle.y > mid[1]) {
+    if (particle.Y > mid[1]) {
         // Set second bit to 1
         octant |= 2;
     }
-    if (particle.z > mid[2]) {
+    if (particle.Z > mid[2]) {
         // Set 3rd bit to 1
         octant |= 4;
     }
@@ -243,20 +247,20 @@ __global__ void computeForcesKernel(Particle* inpBodies, BarnesHut* tree, double
         BarnesHut* node = stack[stackTop--];
 
         // Catch zero cases
-        if (node->mass == 0 || (node->xcm == p.x && node->ycm == p.y && node->zcm == p.z)) {
+        if (node->mass == 0 || (node->xcm == p.X && node->ycm == p.Y && node->zcm == p.Z)) {
             continue;
         }
 
-        double d = getDistance(p.x, p.y, p.z, node->xcm, node->ycm, node->zcm);
+        double d = getDistance(p.X, p.Y, p.Z, node->xcm, node->ycm, node->zcm);
         double s = node->bounds[0][1] - node->bounds[0][0];
 
         // Barnes-Hut assumes sufficiently far away enough particles to be in larger nodes
         // The condition that needs to be met is s / d < theta
         if ((s / d < theta) || node->numBodies == 1) {
             double a = (mode * G * node->mass) / (d * d);
-            ax += a * (node->xcm - p.x) / d;
-            ay += a * (node->ycm - p.y) / d;
-            az += a * (node->zcm - p.z) / d;
+            ax += a * (node->xcm - p.X) / d;
+            ay += a * (node->ycm - p.Y) / d;
+            az += a * (node->zcm - p.Z) / d;
         } else {
             // Push all nodes that do that satisfy the above 
             // condition further into the stack for processing
@@ -269,9 +273,9 @@ __global__ void computeForcesKernel(Particle* inpBodies, BarnesHut* tree, double
         }
     }
     // Add acceleration into particle
-    p.ax = ax;
-    p.ay = ay;
-    p.az = az;
+    p.Ax = ax;
+    p.Ay = ay;
+    p.Az = az;
 }
 
 // Yoshida constants
@@ -282,45 +286,45 @@ const double C2 = (D1 + D2) / 2.0;
 
 // Kernel to update position
 // Each step has a slightly different multiplier
-__global__ void yoshidaPositionKernel(Particle* particles, double dt, double multiplier) {
+__global__ void yoshidaPositionKernel(int numParticles, Particle* particles, double dt, double multiplier) {
     // Calculate the global thread index
     // Each thread gets a unique "idx" to work on a different particle
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
 
     // Ensure the thread index is within bounds
-    if (idx >= tree->numBodies) {
+    if (idx >= numParticles) {
         return;
     }
     Particle& p = particles[idx];
 
     // Apply formula
-    p.x += multiplier * p.vx * dt;
-    p.y += multiplier * p.vy * dt;
-    p.z += multiplier * p.vz * dt;
+    p.X += multiplier * p.Vx * dt;
+    p.Y += multiplier * p.Vy * dt;
+    p.Z += multiplier * p.Vz * dt;
 }
 
 // Kernel to update velocity
 // Each step has a slightly different multiplier
-__global__ void yoshidaVelocityKernel(Particle* particles, double dt, double multiplier) {
+__global__ void yoshidaVelocityKernel(int numParticles, Particle* particles, double dt, double multiplier) {
     // Calculate the global thread index
     // Each thread gets a unique "idx" to work on a different particle
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
 
     // Ensure the thread index is within bounds
-    if (idx >= tree->numBodies) {
+    if (idx >= numParticles) {
         return;
     }
     Particle& p = particles[idx];
 
     // Apply formula
-    p.vx += multiplier * p.ax * dt;
-    p.vy += multiplier * p.ay * dt;
-    p.vz += multiplier * p.az * dt;
+    p.Vx += multiplier * p.Ax * dt;
+    p.Vy += multiplier * p.Ay * dt;
+    p.Vz += multiplier * p.Az * dt;
 }
 
 // Step Yoshida Position
-void stepYoshidaPosition(Particle* particles, double dt, double multiplier, int threads, int blocks) {
-    yoshidaPositionKernel<<<blocks, threads>>>(particles, dt, multiplier);
+void stepYoshidaPosition(int numParticles, Particle* particles, double dt, double multiplier, int threads, int blocks) {
+    yoshidaPositionKernel<<<blocks, threads>>>(numParticles, particles, dt, multiplier);
     cudaDeviceSynchronize();
 }
 
@@ -329,7 +333,7 @@ void stepYoshidaVelocity(int numParticles, Particle* particles, double bounds[3]
     BarnesHut* tree = new BarnesHut(numParticles, particles, bounds);
     tree->computeForces(theta, mode);
     delete tree;
-    yoshidaVelocityKernel<<<blocks, threads>>>(particles, dt, D1);
+    yoshidaVelocityKernel<<<blocks, threads>>>(numParticles, particles, dt, D1);
     cudaDeviceSynchronize();
 }
 
@@ -338,9 +342,10 @@ void stepYoshidaVelocity(int numParticles, Particle* particles, double bounds[3]
 // Distance is edge length of simulation box
 // Needs to be C to be Go-compatible
 extern "C" { 
-    void applyYoshida(int numParticles, Particle* particles, double distance, double dt, double theta, double mode) {
+    __declspec(dllexport) void applyYoshida(int numParticles, Particle* particles, double distance, double dt, double theta, double mode) {
         // Copy particles to device
         Particle* dParticles;
+        cudaMalloc(&dParticles, numParticles * sizeof(Particle));
         cudaMemcpy(&dParticles, &particles, numParticles * sizeof(Particle), cudaMemcpyHostToDevice);
 
         // Create bounds for later
@@ -359,47 +364,50 @@ extern "C" {
         // Synchronization is done after everything inside the function
 
         // Step 1 Position
-        stepYoshidaPosition(particles, dt, C1, threads, blocks);
+        stepYoshidaPosition(numParticles, particles, dt, C1, threads, blocks);
 
         // Step 1 Velocity
         stepYoshidaVelocity(numParticles, particles, bounds, dt, D1, theta, mode, threads, blocks);
 
         // Step 2 Position
-        stepYoshidaPosition(particles, dt, C2, threads, blocks);
+        stepYoshidaPosition(numParticles, particles, dt, C2, threads, blocks);
 
         // Step 2 Velocity
         stepYoshidaVelocity(numParticles, particles, bounds, dt, D2, theta, mode, threads, blocks);
 
         // Step 3 Position
-        stepYoshidaPosition(particles, dt, C2, threads, blocks);
+        stepYoshidaPosition(numParticles, particles, dt, C2, threads, blocks);
 
         // Step 3 Velocity
         stepYoshidaVelocity(numParticles, particles, bounds, dt, D1, theta, mode, threads, blocks);
 
         // Step 4 Position
-        stepYoshidaPosition(particles, dt, C1, threads, blocks);
+        stepYoshidaPosition(numParticles, particles, dt, C1, threads, blocks);
 
         // Copy final particles back to host
-        cudaMemcpy(&particles, &dParticles, numBodies * sizeof(Particle), cudaMemcpyDeviceToHost);
+        cudaMemcpy(&particles, &dParticles, numParticles * sizeof(Particle), cudaMemcpyDeviceToHost);
+    }
+
+    // Update particle accelerations based on the forces
+    // Needed for very first time step
+    __declspec(dllexport) void applyForces(int numParticles, Particle* particles, double distance, double theta, double mode) {
+        // Copy particles to device
+        Particle* dParticles;
+        cudaMalloc(&dParticles, numParticles * sizeof(Particle));
+        cudaMemcpy(&dParticles, &particles, numParticles * sizeof(Particle), cudaMemcpyHostToDevice);
+        
+        // Create bounds
+        double bounds[3][2];
+        for (int i = 0; i < 3; i++) {
+            bounds[i][0] = 0.0;
+            bounds[i][1] = distance;
+        }
+
+        BarnesHut* tree = new BarnesHut(numParticles, particles, bounds);
+        tree->computeForces(theta, mode);
+        delete tree;
+
+        // Copy final particles back to host
+        cudaMemcpy(&particles, &dParticles, numParticles * sizeof(Particle), cudaMemcpyDeviceToHost);
     }
 }
-
-// C-compatible functions for cgo
-// extern "C" {
-//     BarnesHut* createBarnesHut(int numBodies, Particle* bodies, double bounds[3][2]) {
-//         return new BarnesHut(numBodies, bodies, bounds);
-//     }
-
-//     void destroyBarnesHut(BarnesHut* tree) {
-//         delete tree;
-//     }
-
-//     void computeBarnesHutForces(BarnesHut* tree, double theta, double mode) {
-//         tree->computeForces(theta, mode);
-//     }
-
-//     // Function to copy particles list from device to host
-//     void copyParticlesToHost(BarnesHut* tree, int numBodies, Particle* hBodies) {
-//         cudaMemcpy(&hBodies, &tree->dBodies, tree->numBodies * sizeof(Particle), cudaMemcpyDeviceToHost);
-//     }
-// }

@@ -40,10 +40,10 @@ func DisperseToGrid() []Particle {
 	for i := 0.0; i < numPerSide; i++ {
 		for j := 0.0; j < numPerSide; j++ {
 			for k := 0.0; k < numPerSide; k++ {
-				x := (i + 0.5) * config.Distance / float64(config.NumParticles)
-				y := (j + 0.5) * config.Distance / float64(config.NumParticles)
-				z := (k + 0.5) * config.Distance / float64(config.NumParticles)
-				newParticle := Particle{mass, x, y, z, 0, 0, 0, 0, 0, 0}
+				x := (i + 0.5) * config.Distance / numPerSide
+				y := (j + 0.5) * config.Distance / numPerSide
+				z := (k + 0.5) * config.Distance / numPerSide
+				newParticle := Particle{mass, x, y, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 				particles = append(particles, newParticle)
 			}
 		}
