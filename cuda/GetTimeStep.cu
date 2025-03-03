@@ -74,18 +74,22 @@ extern "C" {
 
         // Move items to host
         double hA, hD;
-        cudaMemcpy(&hA, dA, sizeof(double), cudaMemcpyDeviceToHost);
-        cudaMemcpy(&hD, dD, sizeof(double), cudaMemcpyDeviceToHost);
+        cudaMemcpy(&hA, &dA, sizeof(double), cudaMemcpyDeviceToHost);
+        cudaMemcpy(&hD, &dD, sizeof(double), cudaMemcpyDeviceToHost);
+
+        // Free device variables from memory
+        cudaFree(dA);
+        cudaFree(dD);
+
+        // Average out
+        hA /= numParticles;
+        hD /= numParticles;
 
         // Solve for softening length
         double softeningLength = hD / softeningDivisor;
 
         // Compute time step
         double timeStep = timeStepParameter * sqrt(softeningLength / hA);
-
-        // Free device variables from memory
-        cudaFree(dA);
-        cudaFree(dD);
 
         // Return time step
         return timeStep;

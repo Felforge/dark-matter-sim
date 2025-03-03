@@ -1,13 +1,39 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+	"time"
+)
+
+func computeTimeStep(particles []Particle, inpConfig Config) float64 {
+	totalD := 0.0
+	totalA := 0.0
+	for _, p := range particles {
+		totalA += p.Ax*p.Ax + p.Ay*p.Ay + p.Az*p.Az
+		accumulatedD := 0.0
+		for _, iP := range particles {
+			if p == iP {
+				continue
+			}
+			accumulatedD += math.Sqrt(p.X*p.X + p.Y*p.Y + p.Z*p.Z)
+		}
+		totalD += accumulatedD / float64(inpConfig.NumParticles-1)
+	}
+	totalA /= float64(inpConfig.NumParticles)
+	totalD /= float64(inpConfig.NumParticles)
+	return inpConfig.TimeStepParameter * math.Sqrt(totalD/totalA/inpConfig.SofteningDivisor)
+}
 
 func main() {
 	config := LoadConfig()
 	particles := DisperseToGrid()
-	fmt.Println(particles[0].X, particles[0].Y, particles[0].Z)
-	fmt.Println(particles[1].X, particles[1].Y, particles[1].Z)
-	fmt.Println(particles[2].X, particles[2].Y, particles[2].Z)
+	start := time.Now()
 	timeStep := GetTimeStep(particles, config.TimeStepParameter, config.SofteningDivisor)
-	fmt.Println(timeStep)
+	elapsed := time.Since(start)
+	fmt.Println(elapsed, timeStep)
+	start = time.Now()
+	timeStep = computeTimeStep(particles, config)
+	elapsed = time.Since(start)
+	fmt.Println(elapsed, timeStep)
 }

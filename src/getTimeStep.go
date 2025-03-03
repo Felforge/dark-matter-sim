@@ -15,7 +15,6 @@ __declspec(dllexport) extern double getTimeStep(Particle* particles, int numPart
 */
 import "C"
 import (
-	"fmt"
 	"unsafe"
 )
 
@@ -26,6 +25,5 @@ func GetTimeStep(particles []Particle, timeStepParameter float64, softeningDivis
 	cTimeStepParameter := C.double(timeStepParameter)
 	cSofteningDivisor := C.double(softeningDivisor)
 	ts := C.getTimeStep(particlesPtr, numParticles, cTimeStepParameter, cSofteningDivisor)
-	fmt.Println(ts)
 	return float64(ts)
 }
