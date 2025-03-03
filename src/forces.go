@@ -1,7 +1,7 @@
 package main
 
 /*
-#cgo LDFLAGS: -L/libs -lBarnesHut -lcudart_static
+#cgo LDFLAGS: -L./../libs -l:Forces.dll -lcudart_static
 #include <stdlib.h>
 
 // Define the Particle struct in C
@@ -13,59 +13,66 @@ typedef struct {
 } Particle;
 
 // Declare external functions
-extern void applyYoshida(int numParticles, Particle* particles, double distance, double dt, double theta, double mode);
+// Both update the inputted particles parameter externally
+__declspec(dllexport) void applyYoshida(int numParticles, Particle* particles, double distance, double dt, double theta, double mode);
+__declspec(dllexport) void applyForces(int numParticles, Particle* particles, double distance, double theta, double mode);
 */
 import "C"
+import "unsafe"
 
 // Mode is 1.0 for normal, -1.0 for inverse
 // Theta is for the Barnes-Hut Algorithm
-// Enter 0 for theta or mode to use fault value
-// func TimeEvolve(distance float64, particles []Particle, theta float64, mode float64) []Particle {
-// 	if theta == 0 {
-// 		theta = 0.5
-// 	}
-// 	if mode == 0 {
-// 		mode = 1.0
-// 	}
+// Enter 0 for theta or mode to use the default value
+func ApplyYoshida(particles []Particle, distance float64, dt float64, theta float64, mode float64) []Particle {
+	// Set default values
+	if theta == 0.0 {
+		theta = 0.5
+	}
+	if mode == 0.0 {
+		mode = 1.0
+	}
 
-// 	// Create pointer to list of particles
-// 	particlesPtr := (*C.Particle)(unsafe.Pointer(&particles))
+	// Get pointer for particles
+	particlesPtr := (*C.Particle)(unsafe.Pointer(&particles[0]))
 
-// 	// Create pointer to bounds
-// 	// Bounds are the same across 3 dimensions for the whole area
-// 	var bounds [3][2]C.double
-// 	for i := 0; i < 3; i++ {
-// 		bounds[i][0] = 0.0
-// 		bounds[i][1] = C.double(distance)
-// 	}
-// 	boundsPtr := (*[2]C.double)(unsafe.Pointer(&bounds[0]))
+	// Get C Variables
+	cNumParticles := C.int(len(particles))
+	cDistance := C.double(distance)
+	cDt := C.double(dt)
+	cTheta := C.double(theta)
+	cMode := C.double(mode)
 
-// 	// C-compatibel list of bodies
-// 	numBodies := len(particles)
-// 	cNumBodies := C.int(numBodies)
+	// Update particles
+	C.applyYoshida(cNumParticles, particlesPtr, cDistance, cDt, cTheta, cMode)
 
-// 	// Create Barnes Hut Tree
-// 	tree := C.createBarnesHut(cNumBodies, particlesPtr, boundsPtr)
+	// Return particles that is now updated
+	return particles
+}
 
-// 	// Compute forces
-// 	cTheta := C.double(theta)
-// 	cMode := C.double(mode)
-// 	C.computeBarnesHutForces(tree, cTheta, cMode)
+// Mode is 1.0 for normal, -1.0 for inverse
+// Theta is for the Barnes-Hut Algorithm
+// Enter 0 for theta or mode to use the default value
+func ApplyForces(particles []Particle, distance float64, theta float64, mode float64) []Particle {
+	// Set default values
+	if theta == 0.0 {
+		theta = 0.5
+	}
+	if mode == 0.0 {
+		mode = 1.0
+	}
 
-// 	// Retrieve updated particles
-// 	hParticles := make([]C.Particle, numBodies)
-// 	hParticlesPtr := (*C.Particle)(unsafe.Pointer(&hParticles))
-// 	C.copyParticlesToHost(tree, cNumBodies, hParticlesPtr)
+	// Get pointer for particles
+	particlesPtr := (*C.Particle)(unsafe.Pointer(&particles[0]))
 
-// 	// Convert from C Particle to Go Particle
-// 	goParticles := make([]Particle, numBodies)
-// 	for i := 0; i < numBodies; i++ {
-// 		goParticles[i] = Particle{
-// 			Mass: float64(hParticles[i].mass),
-// 			X:    float64(hParticles[i].x), Y: float64(hParticles[i].y), Z: float64(hParticles[i].z),
-// 			Vx: float64(hParticles[i].vx), Vy: float64(hParticles[i].vy), Vz: float64(hParticles[i].vz),
-// 			Ax: float64(hParticles[i].ax), Ay: float64(hParticles[i].ay), Az: float64(hParticles[i].az),
-// 		}
-// 	}
-// 	return goParticles
-// }
+	// Get C Variables
+	cNumParticles := C.int(len(particles))
+	cDistance := C.double(distance)
+	cTheta := C.double(theta)
+	cMode := C.double(mode)
+
+	// Update particles
+	C.applyForces(cNumParticles, particlesPtr, cDistance, cTheta, cMode)
+
+	// Return particles that is now updated
+	return particles
+}
