@@ -299,7 +299,7 @@ const double C2 = (D1 + D2) / 2.0;
 
 // Kernel to update position
 // Each step has a slightly different multiplier
-__global__ void yoshidaPositionKernel(int numParticles, Particle* particles, double dt, double multiplier) {
+__global__ void yoshidaPositionKernel(int numParticles, Particle* particles, double distance, double dt, double multiplier) {
     // Calculate the global thread index
     // Each thread gets a unique "idx" to work on a different particle
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
@@ -311,9 +311,33 @@ __global__ void yoshidaPositionKernel(int numParticles, Particle* particles, dou
     Particle& p = particles[idx];
 
     // Apply formula
-    p.X += multiplier * p.Vx * dt;
-    p.Y += multiplier * p.Vy * dt;
-    p.Z += multiplier * p.Vz * dt;
+    // Make sure particles stay in the simulation box
+    x = p.X + multiplier * p.Vx * dt;
+    if (x > distance) {
+        p.X = distance;
+    } else if (x < 0.0) {
+        p.X = 0.0;
+    } else {
+        p.X = x;
+    }
+
+    y = p.Y + multiplier * p.Vy * dt;
+    if (y > distance) {
+        p.Y = distance;
+    } else if (y < 0.0) {
+        p.Y = 0.0;
+    } else {
+        p.Y = y;
+    }
+
+    z = p.Z + multiplier * p.Vz * dt;
+    if (z > distance) {
+        p.Z = distance;
+    } else if (x < 0.0) {
+        p.Z = 0.0;
+    } else {
+        p.Z = z;
+    }
 }
 
 // Kernel to update velocity
@@ -336,9 +360,9 @@ __global__ void yoshidaVelocityKernel(int numParticles, Particle* particles, dou
 }
 
 // Step Yoshida Position
-void stepYoshidaPosition(int numParticles, Particle* particles, double dt, double multiplier, int threads, int blocks) {
+void stepYoshidaPosition(int numParticles, Particle* particles, double distance, double dt, double multiplier, int threads, int blocks) {
     // Run Kernel and wait for everything to finish
-    yoshidaPositionKernel<<<blocks, threads>>>(numParticles, particles, dt, multiplier);
+    yoshidaPositionKernel<<<blocks, threads>>>(numParticles, particles, distance, dt, multiplier);
     cudaDeviceSynchronize();
 }
 
@@ -384,25 +408,25 @@ extern "C" {
         // Synchronization is done after everything inside the function
 
         // Step 1 Position
-        stepYoshidaPosition(numParticles, dParticles, dt, C1, threads, blocks);
+        stepYoshidaPosition(numParticles, dParticles, distance, dt, C1, threads, blocks);
 
         // Step 1 Velocity
         stepYoshidaVelocity(numParticles, dParticles, bounds, dt, D1, theta, mode, threads, blocks);
 
         // Step 2 Position
-        stepYoshidaPosition(numParticles, particles, dt, C2, threads, blocks);
+        stepYoshidaPosition(numParticles, particles, distance, dt, C2, threads, blocks);
 
         // Step 2 Velocity
         stepYoshidaVelocity(numParticles, particles, bounds, dt, D2, theta, mode, threads, blocks);
 
         // Step 3 Position
-        stepYoshidaPosition(numParticles, particles, dt, C2, threads, blocks);
+        stepYoshidaPosition(numParticles, particles, distance, dt, C2, threads, blocks);
 
         // Step 3 Velocity
         stepYoshidaVelocity(numParticles, particles, bounds, dt, D1, theta, mode, threads, blocks);
 
         // Step 4 Position
-        stepYoshidaPosition(numParticles, particles, dt, C1, threads, blocks);
+        stepYoshidaPosition(numParticles, particles, distance, dt, C1, threads, blocks);
 
         // Copy dBodies back to the CPU
         cudaMemcpy(&particles, &dParticles, numParticles * sizeof(Particle), cudaMemcpyDeviceToHost);

@@ -20,37 +20,27 @@ type Particle struct {
 	Az   float64
 }
 
-// DisperseToGrid disperses particles uniformly to a grid
-func DisperseToGrid() []Particle {
-	// Load config file
-	config := LoadConfig()
+// Check if net accelerations are "close enough" to zero
+// Put zero leniency for the default value of 1e-6
+func isNearZeroAcceleration(particles []Particle, leniency float64) bool {
+	// Set default value
+	if leniency == 0.0 {
+		leniency = 1e-6
+	}
 
-	// Create particles list
-	particles := []Particle{}
+	// Iterate Particles List
+	for _, p := range particles {
+		// Calculate magnitude of acceleration vector
+		magnitudeA := math.Sqrt(p.Ax*p.Ax + p.Ay*p.Ay + p.Az*p.Az)
 
-	// Calculate spacing
-	numPerSide := math.Cbrt(float64(config.NumParticles))
-
-	// Calculate uniform mass
-	mass := config.MeanDensity * (math.Pow(float64(config.Distance), 3))
-	mass *= math.Pow(float64(config.HubbleParameter), 2)
-	mass /= float64(config.NumParticles)
-
-	// Place particles
-	for i := 0.0; i < numPerSide; i++ {
-		for j := 0.0; j < numPerSide; j++ {
-			for k := 0.0; k < numPerSide; k++ {
-				x := (i + 0.5) * config.Distance / numPerSide
-				y := (j + 0.5) * config.Distance / numPerSide
-				z := (k + 0.5) * config.Distance / numPerSide
-				newParticle := Particle{mass, x, y, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-				particles = append(particles, newParticle)
-			}
+		// If acceleration is greater than the maximum allowed return false
+		if magnitudeA > leniency {
+			return false
 		}
 	}
 
-	// Return final construct
-	return particles
+	// Return true if and only if nothing satisifies the if statement
+	return true
 }
 
 // CreateGlass disperses particles in a glass configuration
@@ -74,7 +64,16 @@ func CreateGlass() []Particle {
 		newParticle := Particle{mass, x, y, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 		particles = append(particles, newParticle)
 	}
-	return particles // NOT DONE
-}
 
-// Use Yoshida integration to implement antigravity
+	// Loop until all accelerations are nearly zero
+	for isNearZeroAcceleration(particles, 0.0) {
+		// Compute appropriate time step
+		timeStep := GetTimeStep(particles, config)
+		// Time evolve using the time step
+		// Mode of -1.0 is needed for antigravity
+		particles = ApplyYoshida(particles, timeStep, -1.0, config)
+	}
+
+	// Return finalized particles
+	return particles
+}

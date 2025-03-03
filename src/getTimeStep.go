@@ -19,11 +19,11 @@ import (
 )
 
 // GetTimeStep calls the CUDA function of the same name
-func GetTimeStep(particles []Particle, timeStepParameter float64, softeningDivisor float64) float64 {
+func GetTimeStep(particles []Particle, config Config) float64 {
 	particlesPtr := (*C.Particle)(unsafe.Pointer(&particles[0]))
 	numParticles := C.int(len(particles))
-	cTimeStepParameter := C.double(timeStepParameter)
-	cSofteningDivisor := C.double(softeningDivisor)
+	cTimeStepParameter := C.double(config.TimeStepParameter)
+	cSofteningDivisor := C.double(config.SofteningDivisor)
 	ts := C.getTimeStep(particlesPtr, numParticles, cTimeStepParameter, cSofteningDivisor)
 	return float64(ts)
 }

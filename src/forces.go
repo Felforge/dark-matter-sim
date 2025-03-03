@@ -23,7 +23,8 @@ import "unsafe"
 // Mode is 1.0 for normal, -1.0 for inverse
 // Theta is for the Barnes-Hut Algorithm
 // Enter 0 for theta or mode to use the default value
-func ApplyYoshida(particles []Particle, distance float64, dt float64, theta float64, mode float64) []Particle {
+// Return may not be needed need to test
+func ApplyYoshida(particles []Particle, dt float64, mode float64, config Config) []Particle {
 	// Set default values
 	if theta == 0.0 {
 		theta = 0.5
@@ -37,9 +38,9 @@ func ApplyYoshida(particles []Particle, distance float64, dt float64, theta floa
 
 	// Get C Variables
 	cNumParticles := C.int(len(particles))
-	cDistance := C.double(distance)
+	cDistance := C.double(config.Distance)
 	cDt := C.double(dt)
-	cTheta := C.double(theta)
+	cTheta := C.double(config.Theta)
 	cMode := C.double(mode)
 
 	// Update particles
