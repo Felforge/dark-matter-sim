@@ -324,17 +324,31 @@ __global__ void yoshidaVelocityKernel(int numParticles, Particle* particles, dou
 
 // Step Yoshida Position
 void stepYoshidaPosition(int numParticles, Particle* particles, double dt, double multiplier, int threads, int blocks) {
+    // Create Barnes-Hut tree and calculate particle accelerations
+    // Copy particles to device
+    Particle* dParticles;
+    cudaMalloc(&dParticles, numParticles * sizeof(Particle));
+    cudaMemcpy(&dParticles, &particles, numParticles * sizeof(Particle), cudaMemcpyHostToDevice);
+
+    // Run Kernel and wait for everything to finish
     yoshidaPositionKernel<<<blocks, threads>>>(numParticles, particles, dt, multiplier);
     cudaDeviceSynchronize();
 }
 
 // Step Yoshida Velocity
 void stepYoshidaVelocity(int numParticles, Particle* particles, double bounds[3][2], double dt, double multiplier, double theta, double mode, int threads, int blocks) {
+    // BarnesHut takes the host particles object
     BarnesHut* tree = new BarnesHut(numParticles, particles, bounds);
     tree->computeForces(theta, mode);
-    delete tree;
-    yoshidaVelocityKernel<<<blocks, threads>>>(numParticles, particles, dt, D1);
+
+    // Run Kernel and wait for everything to finish
+    // Use the dBodies object from the tree as it is the updated version
+    // Copying bodies to device is not needed as dBodies in the tree is on the device
+    yoshidaVelocityKernel<<<blocks, threads>>>(numParticles, tree->dBodies, dt, D1);
     cudaDeviceSynchronize();
+
+    // Delete tree
+    delete tree;
 }
 
 // Use Yoshida integration to time evolve the particles
@@ -391,11 +405,6 @@ extern "C" {
     // Update particle accelerations based on the forces
     // Needed for very first time step
     __declspec(dllexport) void applyForces(int numParticles, Particle* particles, double distance, double theta, double mode) {
-        // Copy particles to device
-        Particle* dParticles;
-        cudaMalloc(&dParticles, numParticles * sizeof(Particle));
-        cudaMemcpy(&dParticles, &particles, numParticles * sizeof(Particle), cudaMemcpyHostToDevice);
-        
         // Create bounds
         double bounds[3][2];
         for (int i = 0; i < 3; i++) {
@@ -403,11 +412,14 @@ extern "C" {
             bounds[i][1] = distance;
         }
 
+        // Create Barnes-Hut tree and calculate particle accelerations
         BarnesHut* tree = new BarnesHut(numParticles, particles, bounds);
         tree->computeForces(theta, mode);
-        delete tree;
 
         // Copy final particles back to host
-        cudaMemcpy(&particles, &dParticles, numParticles * sizeof(Particle), cudaMemcpyDeviceToHost);
+        cudaMemcpy(&particles, &tree->dBodies, numParticles * sizeof(Particle), cudaMemcpyDeviceToHost);
+
+        // Delete tree
+        delete tree;
     }
 }
