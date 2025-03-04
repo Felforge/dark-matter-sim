@@ -1,5 +1,6 @@
 #include <cuda_runtime.h>
 #include <cmath>
+#include <iostream>
 
 #define G 6.67428e-11f
 
@@ -79,15 +80,25 @@ class BarnesHut {
 
             // Memory was allocated outside
             // Dont free top layer
-            if (numBodies != totalBodies) {
+            // Make sure everything wasn't freed already
+            if (numBodies != totalBodies && dBodies != nullptr) {
                 cudaFree(dBodies);
+                dBodies = nullptr;
             }
-
-            cudaFree(dOctantCounts);
-            for (int i = 0; i < 8; i++) {
-                cudaFree(dOctantLists[i]);
+            if (dOctantCounts != nullptr) {
+                cudaFree(dOctantCounts);
+                dOctantCounts = nullptr;
             }
-            cudaFree(dOctantLists);
+            if (dOctantLists != nullptr) {
+                for (int i = 0; i < 8; i++) {
+                    if (dOctantLists[i] != nullptr) {
+                        cudaFree(dOctantLists[i]);
+                        dOctantLists[i] = nullptr;
+                    }
+                }
+                cudaFree(dOctantLists);
+                dOctantLists = nullptr;
+            }
         }
 
         // Computer forces using parallelization
@@ -99,10 +110,18 @@ class BarnesHut {
             int blocks = (numBodies + threads - 1) / threads;
             
             // Calculate forces in parallel on the GPU
+            printf("Launching kernel with %d blocks, %d threads, %d particles\n", blocks, threads, numBodies);
             computeForcesKernel<<<blocks, threads>>>(dBodies, this, theta, mode);
 
             // Wait for the octree construction to finish
             cudaDeviceSynchronize();
+
+            // Print errors
+            cudaError_t err = cudaGetLastError();
+            if (err != cudaSuccess) {
+                printf("CUDA Kernel Error: %s\n", cudaGetErrorString(err));
+                return;
+            }
         }
 
     private:
@@ -154,20 +173,46 @@ class BarnesHut {
             }
 
             // Allocate memory for octant lists
-            cudaMallocManaged(&dOctantLists, 8 * sizeof(Particle*));
+            cudaError_t err = cudaMallocManaged(&dOctantLists, 8 * sizeof(Particle*));
+            // Check for allocation errors
+            if (err != cudaSuccess) {
+                printf("CUDA malloc for dOctantLists failed: %s\n", cudaGetErrorString(err));
+                dOctantLists = nullptr;
+                return;
+            }
             for (int i = 0; i < 8; i++) {
-                cudaMallocManaged(&dOctantLists[i], numBodies * sizeof(Particle));
+                err = cudaMallocManaged(&dOctantLists[i], numBodies * sizeof(Particle));
+                // Check for allocation errors
+                if (err != cudaSuccess) {
+                    printf("CUDA malloc for dOctantLists[%d] failed: %s\n", i, cudaGetErrorString(err));
+                    dOctantLists[i] = nullptr;
+                    return;
+                }
             }
 
             // Allocate memory for counters
-            cudaMallocManaged(&dOctantCounts, 8 * sizeof(int));
+            err = cudaMallocManaged(&dOctantCounts, 8 * sizeof(int));
+            // Check for allocation errors
+            if (err != cudaSuccess) {
+                printf("CUDA malloc for dOctantCounts failed: %s\n", cudaGetErrorString(err));
+                dOctantCounts = nullptr;
+                return;
+            }
             cudaMemset(dOctantCounts, 0, 8 * sizeof(int));
 
             // Launch CUDA Kernel
             int threads = 256;
             int blocks = (numBodies + threads - 1) / threads;
+            printf("Launching kernel with %d blocks, %d threads, %d particles\n", blocks, threads, numBodies);
             createChildrenKernel<<<blocks, threads>>>(dBodies, numBodies, dOctantLists, dOctantCounts, mid);
             cudaDeviceSynchronize();
+
+            // Print errors
+            err = cudaGetLastError();
+            if (err != cudaSuccess) {
+                printf("CUDA Kernel Error: %s\n", cudaGetErrorString(err));
+                return;
+            }
 
             // Copy dOctantCounts to CPU
             int hOctantCounts[8];  // Host-side array
@@ -175,8 +220,8 @@ class BarnesHut {
             cudaDeviceSynchronize();  // Ensure copy is complete before using it
 
             // Create children instances
-            Particle* hOctantList;
             for (int i = 0; i < 8; i++) {
+                Particle* hOctantList = (Particle*)malloc(hOctantCounts[i] * sizeof(Particle));
                 cudaMemcpy(hOctantList, dOctantLists[i], hOctantCounts[i] * sizeof(Particle), cudaMemcpyDeviceToHost);
                 children[i] = new BarnesHut(hOctantCounts[i], hOctantList, octantBounds[i], totalBodies);
             }
@@ -220,6 +265,12 @@ __global__ void createChildrenKernel(Particle* inpBodies, int inpNumBodies, Part
     // Get index for this particle in the octant list
     int insertIdx = atomicAdd(&octantCounts[octant], 1);
 
+    // Prevent out of bounds access
+    if (insertIdx >= inpNumBodies) {
+        printf("Out of bounds access: octant %d, index %d (numBodies: %d)\n", octant, insertIdx, inpNumBodies);
+        return;
+    }
+
     octantLists[octant][insertIdx] = particle;
 }
 
@@ -257,7 +308,7 @@ __global__ void computeForcesKernel(Particle* inpBodies, BarnesHut* tree, double
         }
 
         // Pop a node from the stack
-        BarnesHut* node = stack[stackTop--];
+        BarnesHut* node = stack[--stackTop];
 
         // Catch zero cases
         if (node->mass == 0 || (node->xcm == p.X && node->ycm == p.Y && node->zcm == p.Z)) {
@@ -333,7 +384,7 @@ __global__ void yoshidaPositionKernel(int numParticles, Particle* particles, dou
     double z = p.Z + multiplier * p.Vz * dt;
     if (z > distance) {
         p.Z = distance;
-    } else if (x < 0.0) {
+    } else if (z < 0.0) {
         p.Z = 0.0;
     } else {
         p.Z = z;
@@ -362,8 +413,16 @@ __global__ void yoshidaVelocityKernel(int numParticles, Particle* particles, dou
 // Step Yoshida Position
 void stepYoshidaPosition(int numParticles, Particle* particles, double distance, double dt, double multiplier, int threads, int blocks) {
     // Run Kernel and wait for everything to finish
+    printf("Launching kernel with %d blocks, %d threads, %d particles\n", blocks, threads, numParticles);
     yoshidaPositionKernel<<<blocks, threads>>>(numParticles, particles, distance, dt, multiplier);
     cudaDeviceSynchronize();
+
+    // Print errors
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        printf("CUDA Kernel Error: %s\n", cudaGetErrorString(err));
+        return;
+    }
 }
 
 // Step Yoshida Velocity
@@ -377,8 +436,16 @@ void stepYoshidaVelocity(int numParticles, Particle* particles, double bounds[3]
 
     // Run Kernel and wait for everything to finish
     // The tree updated particles so it can be used
+    printf("Launching kernel with %d blocks, %d threads, %d particles\n", blocks, threads, numParticles);
     yoshidaVelocityKernel<<<blocks, threads>>>(numParticles, particles, dt, multiplier);
     cudaDeviceSynchronize();
+
+    // Print errors
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        printf("CUDA Kernel Error: %s\n", cudaGetErrorString(err));
+        return;
+    }
 }
 
 // Use Yoshida integration to time evolve the particles
@@ -390,7 +457,12 @@ extern "C" {
         // Copy particles to device
         // Freeing later is not 
         Particle* dParticles;
-        cudaMalloc(&dParticles, numParticles * sizeof(Particle));
+        cudaError_t err = cudaMalloc(&dParticles, numParticles * sizeof(Particle));
+        // Check for allocation errors
+        if (err != cudaSuccess) {
+            printf("CUDA malloc for applyYoshida dParticles failed: %s\n", cudaGetErrorString(err));
+            return;
+        }
         cudaMemcpy(dParticles, particles, numParticles * sizeof(Particle), cudaMemcpyHostToDevice);
         // Create bounds for later
         double bounds[3][2];
@@ -441,7 +513,12 @@ extern "C" {
         // Copy particles to device
         // Freeing later is not 
         Particle* dParticles;
-        cudaMalloc(&dParticles, numParticles * sizeof(Particle));
+        cudaError_t err = cudaMalloc(&dParticles, numParticles * sizeof(Particle));
+        // Check for allocation errors
+        if (err != cudaSuccess) {
+            printf("CUDA malloc for applyForces dParticles failed: %s\n", cudaGetErrorString(err));
+            return;
+        }
         cudaMemcpy(dParticles, particles, numParticles * sizeof(Particle), cudaMemcpyHostToDevice);
 
         // Create bounds

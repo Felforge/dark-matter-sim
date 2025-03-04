@@ -47,8 +47,5 @@ physics-engine/Cargo.lock
 # VSCode settings
 .vscode/
 
-# DLL stuff
-*.exp
-
 # Other
 hidden/

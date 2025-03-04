@@ -65,6 +65,9 @@ func CreateGlass() []Particle {
 		particles = append(particles, newParticle)
 	}
 
+	// Apply initial accelerations for time step calculation
+	particles = ApplyForces(particles, -1.0, config)
+
 	// Loop until all accelerations are nearly zero
 	for isNearZeroAcceleration(particles, 0.0) {
 		// Compute appropriate time step
