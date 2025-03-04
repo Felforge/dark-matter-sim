@@ -1,7 +1,7 @@
 package main
 
 /*
-#cgo LDFLAGS: -L./../libs -l:Forces.dll -lcudart_static
+#cgo LDFLAGS: -L./../libs -l:Forces.dll -lcudart
 #include <stdlib.h>
 
 // Define the Particle struct in C
@@ -21,14 +21,11 @@ import "C"
 import "unsafe"
 
 // Mode is 1.0 for normal, -1.0 for inverse
-// Theta is for the Barnes-Hut Algorithm
+// Theta is for the Barnes-Hut Algorithm and is in the config
 // Enter 0 for theta or mode to use the default value
 // Return may not be needed need to test
 func ApplyYoshida(particles []Particle, dt float64, mode float64, config Config) []Particle {
-	// Set default values
-	if theta == 0.0 {
-		theta = 0.5
-	}
+	// Set default value
 	if mode == 0.0 {
 		mode = 1.0
 	}

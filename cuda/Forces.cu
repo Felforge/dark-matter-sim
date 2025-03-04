@@ -161,7 +161,7 @@ class BarnesHut {
 
             // Allocate memory for counters
             cudaMallocManaged(&dOctantCounts, 8 * sizeof(int));
-            cudaMemset(&dOctantCounts, 0, 8 * sizeof(int));
+            cudaMemset(dOctantCounts, 0, 8 * sizeof(int));
 
             // Launch CUDA Kernel
             int threads = 256;
@@ -171,14 +171,14 @@ class BarnesHut {
 
             // Copy dOctantCounts to CPU
             int hOctantCounts[8];  // Host-side array
-            cudaMemcpy(&hOctantCounts, &dOctantCounts, 8 * sizeof(int), cudaMemcpyDeviceToHost);
+            cudaMemcpy(hOctantCounts, dOctantCounts, 8 * sizeof(int), cudaMemcpyDeviceToHost);
             cudaDeviceSynchronize();  // Ensure copy is complete before using it
 
             // Create children instances
             Particle* hOctantList;
             for (int i = 0; i < 8; i++) {
-                cudaMemcpy(&hOctantList, &dOctantLists[i], hOctantCounts[i] * sizeof(Particle), cudaMemcpyDeviceToHost);
-                children[i] = new BarnesHut(hOctantCounts[i], dOctantLists[i], octantBounds[i], totalBodies);
+                cudaMemcpy(hOctantList, dOctantLists[i], hOctantCounts[i] * sizeof(Particle), cudaMemcpyDeviceToHost);
+                children[i] = new BarnesHut(hOctantCounts[i], hOctantList, octantBounds[i], totalBodies);
             }
         }
 };
@@ -312,7 +312,7 @@ __global__ void yoshidaPositionKernel(int numParticles, Particle* particles, dou
 
     // Apply formula
     // Make sure particles stay in the simulation box
-    x = p.X + multiplier * p.Vx * dt;
+    double x = p.X + multiplier * p.Vx * dt;
     if (x > distance) {
         p.X = distance;
     } else if (x < 0.0) {
@@ -321,7 +321,7 @@ __global__ void yoshidaPositionKernel(int numParticles, Particle* particles, dou
         p.X = x;
     }
 
-    y = p.Y + multiplier * p.Vy * dt;
+    double y = p.Y + multiplier * p.Vy * dt;
     if (y > distance) {
         p.Y = distance;
     } else if (y < 0.0) {
@@ -330,7 +330,7 @@ __global__ void yoshidaPositionKernel(int numParticles, Particle* particles, dou
         p.Y = y;
     }
 
-    z = p.Z + multiplier * p.Vz * dt;
+    double z = p.Z + multiplier * p.Vz * dt;
     if (z > distance) {
         p.Z = distance;
     } else if (x < 0.0) {
@@ -377,7 +377,7 @@ void stepYoshidaVelocity(int numParticles, Particle* particles, double bounds[3]
 
     // Run Kernel and wait for everything to finish
     // The tree updated particles so it can be used
-    yoshidaVelocityKernel<<<blocks, threads>>>(numParticles, particles, dt, D1);
+    yoshidaVelocityKernel<<<blocks, threads>>>(numParticles, particles, dt, multiplier);
     cudaDeviceSynchronize();
 }
 
@@ -391,7 +391,7 @@ extern "C" {
         // Freeing later is not 
         Particle* dParticles;
         cudaMalloc(&dParticles, numParticles * sizeof(Particle));
-        cudaMemcpy(&dParticles, &particles, numParticles * sizeof(Particle), cudaMemcpyHostToDevice);
+        cudaMemcpy(dParticles, particles, numParticles * sizeof(Particle), cudaMemcpyHostToDevice);
         // Create bounds for later
         double bounds[3][2];
         for (int i = 0; i < 3; i++) {
@@ -414,25 +414,25 @@ extern "C" {
         stepYoshidaVelocity(numParticles, dParticles, bounds, dt, D1, theta, mode, threads, blocks);
 
         // Step 2 Position
-        stepYoshidaPosition(numParticles, particles, distance, dt, C2, threads, blocks);
+        stepYoshidaPosition(numParticles, dParticles, distance, dt, C2, threads, blocks);
 
         // Step 2 Velocity
-        stepYoshidaVelocity(numParticles, particles, bounds, dt, D2, theta, mode, threads, blocks);
+        stepYoshidaVelocity(numParticles, dParticles, bounds, dt, D2, theta, mode, threads, blocks);
 
         // Step 3 Position
-        stepYoshidaPosition(numParticles, particles, distance, dt, C2, threads, blocks);
+        stepYoshidaPosition(numParticles, dParticles, distance, dt, C2, threads, blocks);
 
         // Step 3 Velocity
-        stepYoshidaVelocity(numParticles, particles, bounds, dt, D1, theta, mode, threads, blocks);
+        stepYoshidaVelocity(numParticles, dParticles, bounds, dt, D1, theta, mode, threads, blocks);
 
         // Step 4 Position
-        stepYoshidaPosition(numParticles, particles, distance, dt, C1, threads, blocks);
+        stepYoshidaPosition(numParticles, dParticles, distance, dt, C1, threads, blocks);
 
-        // Copy dBodies back to the CPU
-        cudaMemcpy(&particles, &dParticles, numParticles * sizeof(Particle), cudaMemcpyDeviceToHost);
+        // Copy dParticles back to the CPU
+        cudaMemcpy(particles, dParticles, numParticles * sizeof(Particle), cudaMemcpyDeviceToHost);
 
-        // Free dBodies from memory
-        cudaFree(dBodies);
+        // Free dParticles from memory
+        cudaFree(dParticles);
     }
 
     // Update particle accelerations based on the forces
@@ -442,7 +442,7 @@ extern "C" {
         // Freeing later is not 
         Particle* dParticles;
         cudaMalloc(&dParticles, numParticles * sizeof(Particle));
-        cudaMemcpy(&dParticles, &particles, numParticles * sizeof(Particle), cudaMemcpyHostToDevice);
+        cudaMemcpy(dParticles, particles, numParticles * sizeof(Particle), cudaMemcpyHostToDevice);
 
         // Create bounds
         double bounds[3][2];
@@ -459,9 +459,9 @@ extern "C" {
         delete tree;
 
         // Copy final particles back to host
-        cudaMemcpy(&particles, &dBodies, numParticles * sizeof(Particle), cudaMemcpyDeviceToHost);
+        cudaMemcpy(particles, dParticles, numParticles * sizeof(Particle), cudaMemcpyDeviceToHost);
 
-        // Free dBodies from memory
-        cudaFree(dBodies);
+        // Free dParticles from memory
+        cudaFree(dParticles);
     }
 }

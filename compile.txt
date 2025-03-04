@@ -1,0 +1,2 @@
+nvcc --shared -o libs/GetTimeStep.dll cuda/GetTimeStep.cu  -lcudart -Xcompiler /MD
+nvcc --shared -o libs/Forces.dll cuda/Forces.cu  -lcudart -Xcompiler /MD

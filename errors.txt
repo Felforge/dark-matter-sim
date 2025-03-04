@@ -1,0 +1,382 @@
+error:
+C:\Users\spare\OneDrive\Documents\dark-matter-sim\src>go run main.go loadConfig.go getTimeStep.go setup.go forces.go
+Exception 0xc0000005 0x0 0x0 0x7ffbaab52ae2
+PC=0x7ffbaab52ae2
+signal arrived during external code execution
+
+runtime.cgocall(0x7ff7326aeeb9, 0xc0004c3d18)
+        C:/Program Files/Go/src/runtime/cgocall.go:167 +0x3e fp=0xc0004c3cf0 sp=0xc0004c3c88 pc=0x7ff73264845e
+main._Cfunc_applyYoshida(0x1dcd65, 0xc008326000, 0x45046b5755c10f36, 0x3fab2d904c2771f8, 0x3fe0000000000000, 0xbff0000000000000)
+        _cgo_gotypes.go:101 +0x48 fp=0xc0004c3d18 sp=0xc0004c3cf0 pc=0x7ff7326ae548
+main.ApplyYoshida({0xc008326000, 0x1dcd65, 0x1f4866}, 0x3fab2d904c2771f8?, 0xbff0000000000000?, {0x45046b5755c10f36, 0x1dcd65, 0x2ddc8673215d8cf3, 0x3bdac842116132bd, 0x3fe0000000000000, ...})
+        C:/Users/spare/OneDrive/Documents/dark-matter-sim/src/forces.go:44 +0x9f fp=0xc0004c3d58 sp=0xc0004c3d18 pc=0x7ff7326ae9df
+main.CreateGlass()
+        C:/Users/spare/OneDrive/Documents/dark-matter-sim/src/setup.go:74 +0x30e fp=0xc0004c3e98 sp=0xc0004c3d58 pc=0x7ff7326ae44e
+main.main()
+        C:/Users/spare/OneDrive/Documents/dark-matter-sim/src/main.go:6 +0x1f fp=0xc0004c3f50 sp=0xc0004c3e98 pc=0x7ff7326adabf
+runtime.main()
+        C:/Program Files/Go/src/runtime/proc.go:283 +0x27d fp=0xc0004c3fe0 sp=0xc0004c3f50 pc=0x7ff73261cc7d
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004c3fe8 sp=0xc0004c3fe0 pc=0x7ff732650b81
+
+goroutine 2 gp=0xc0000028c0 m=nil [force gc (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc00006bfa8 sp=0xc00006bf88 pc=0x7ff73264a52e
+runtime.goparkunlock(...)
+        C:/Program Files/Go/src/runtime/proc.go:441
+runtime.forcegchelper()
+        C:/Program Files/Go/src/runtime/proc.go:348 +0xb8 fp=0xc00006bfe0 sp=0xc00006bfa8 pc=0x7ff73261cf98
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc00006bfe8 sp=0xc00006bfe0 pc=0x7ff732650b81
+created by runtime.init.7 in goroutine 1
+        C:/Program Files/Go/src/runtime/proc.go:336 +0x1a
+
+goroutine 3 gp=0xc000002c40 m=nil [GC sweep wait]:
+runtime.gopark(0x1?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc00006df80 sp=0xc00006df60 pc=0x7ff73264a52e
+runtime.goparkunlock(...)
+        C:/Program Files/Go/src/runtime/proc.go:441
+runtime.bgsweep(0xc00007a000)
+        C:/Program Files/Go/src/runtime/mgcsweep.go:316 +0xdf fp=0xc00006dfc8 sp=0xc00006df80 pc=0x7ff7326071df
+runtime.gcenable.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:204 +0x25 fp=0xc00006dfe0 sp=0xc00006dfc8 pc=0x7ff7325fb825
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc00006dfe8 sp=0xc00006dfe0 pc=0x7ff732650b81
+created by runtime.gcenable in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:204 +0x66
+
+goroutine 4 gp=0xc000002e00 m=nil [GC scavenge wait]:
+runtime.gopark(0xd59f1c?, 0x3b9aca00?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc000085f78 sp=0xc000085f58 pc=0x7ff73264a52e
+runtime.goparkunlock(...)
+        C:/Program Files/Go/src/runtime/proc.go:441
+runtime.(*scavengerState).park(0x7ff7327c18a0)
+        C:/Program Files/Go/src/runtime/mgcscavenge.go:425 +0x49 fp=0xc000085fa8 sp=0xc000085f78 pc=0x7ff732604c49
+runtime.bgscavenge(0xc00007a000)
+        C:/Program Files/Go/src/runtime/mgcscavenge.go:658 +0x59 fp=0xc000085fc8 sp=0xc000085fa8 pc=0x7ff7326051d9
+runtime.gcenable.gowrap2()
+        C:/Program Files/Go/src/runtime/mgc.go:205 +0x25 fp=0xc000085fe0 sp=0xc000085fc8 pc=0x7ff7325fb7c5
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc000085fe8 sp=0xc000085fe0 pc=0x7ff732650b81
+created by runtime.gcenable in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:205 +0xa5
+
+goroutine 5 gp=0xc000003340 m=nil [finalizer wait]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc000087e30 sp=0xc000087e10 pc=0x7ff73264a52e
+runtime.runfinq()
+        C:/Program Files/Go/src/runtime/mfinal.go:196 +0x107 fp=0xc000087fe0 sp=0xc000087e30 pc=0x7ff7325fa827
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc000087fe8 sp=0xc000087fe0 pc=0x7ff732650b81
+created by runtime.createfing in goroutine 1
+        C:/Program Files/Go/src/runtime/mfinal.go:166 +0x3d
+
+goroutine 6 gp=0xc000003500 m=nil [GC worker (idle)]:
+runtime.gopark(0xc0000021c0?, 0xc00006ffd0?, 0x7d?, 0xcc?, 0xc000018070?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc00006ff38 sp=0xc00006ff18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc00006ffc8 sp=0xc00006ff38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc00006ffe0 sp=0xc00006ffc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc00006ffe8 sp=0xc00006ffe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 7 gp=0xc0000036c0 m=nil [GC worker (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc000081f38 sp=0xc000081f18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc000081fc8 sp=0xc000081f38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc000081fe0 sp=0xc000081fc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc000081fe8 sp=0xc000081fe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 8 gp=0xc000003880 m=nil [GC worker (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc000083f38 sp=0xc000083f18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc000083fc8 sp=0xc000083f38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc000083fe0 sp=0xc000083fc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc000083fe8 sp=0xc000083fe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 9 gp=0xc000003a40 m=nil [GC worker (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc00017bf38 sp=0xc00017bf18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc00017bfc8 sp=0xc00017bf38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc00017bfe0 sp=0xc00017bfc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc00017bfe8 sp=0xc00017bfe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 10 gp=0xc000003c00 m=nil [GC worker (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc00017df38 sp=0xc00017df18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc00017dfc8 sp=0xc00017df38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc00017dfe0 sp=0xc00017dfc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc00017dfe8 sp=0xc00017dfe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 11 gp=0xc000003dc0 m=nil [GC worker (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc000177f38 sp=0xc000177f18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc000177fc8 sp=0xc000177f38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc000177fe0 sp=0xc000177fc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc000177fe8 sp=0xc000177fe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 12 gp=0xc00017e000 m=nil [GC worker (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc000179f38 sp=0xc000179f18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc000179fc8 sp=0xc000179f38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc000179fe0 sp=0xc000179fc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc000179fe8 sp=0xc000179fe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 13 gp=0xc00017e1c0 m=nil [GC worker (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004a5f38 sp=0xc0004a5f18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004a5fc8 sp=0xc0004a5f38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004a5fe0 sp=0xc0004a5fc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004a5fe8 sp=0xc0004a5fe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 14 gp=0xc00017e380 m=nil [GC worker (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004a7f38 sp=0xc0004a7f18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004a7fc8 sp=0xc0004a7f38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004a7fe0 sp=0xc0004a7fc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004a7fe8 sp=0xc0004a7fe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 15 gp=0xc00017e540 m=nil [GC worker (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004a1f38 sp=0xc0004a1f18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004a1fc8 sp=0xc0004a1f38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004a1fe0 sp=0xc0004a1fc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004a1fe8 sp=0xc0004a1fe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 16 gp=0xc00017e700 m=nil [GC worker (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004a3f38 sp=0xc0004a3f18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004a3fc8 sp=0xc0004a3f38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004a3fe0 sp=0xc0004a3fc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004a3fe8 sp=0xc0004a3fe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 18 gp=0xc00017e8c0 m=nil [GC worker (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004aff38 sp=0xc0004aff18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004affc8 sp=0xc0004aff38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004affe0 sp=0xc0004affc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004affe8 sp=0xc0004affe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 19 gp=0xc00017ea80 m=nil [GC worker (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004b1f38 sp=0xc0004b1f18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004b1fc8 sp=0xc0004b1f38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004b1fe0 sp=0xc0004b1fc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004b1fe8 sp=0xc0004b1fe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 20 gp=0xc00017ec40 m=nil [GC worker (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004abf38 sp=0xc0004abf18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004abfc8 sp=0xc0004abf38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004abfe0 sp=0xc0004abfc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004abfe8 sp=0xc0004abfe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 21 gp=0xc00017ee00 m=nil [GC worker (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004adf38 sp=0xc0004adf18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004adfc8 sp=0xc0004adf38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004adfe0 sp=0xc0004adfc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004adfe8 sp=0xc0004adfe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 22 gp=0xc00017efc0 m=nil [GC worker (idle)]:
+runtime.gopark(0x19231732bb0?, 0x0?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004b7f38 sp=0xc0004b7f18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004b7fc8 sp=0xc0004b7f38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004b7fe0 sp=0xc0004b7fc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004b7fe8 sp=0xc0004b7fe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 23 gp=0xc00017f180 m=nil [GC worker (idle)]:
+runtime.gopark(0x19234ff0d44?, 0x1?, 0x8?, 0xa5?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004b9f38 sp=0xc0004b9f18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004b9fc8 sp=0xc0004b9f38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004b9fe0 sp=0xc0004b9fc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004b9fe8 sp=0xc0004b9fe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 24 gp=0xc00017f340 m=nil [GC worker (idle)]:
+runtime.gopark(0x19234f76af8?, 0x1?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004b3f38 sp=0xc0004b3f18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004b3fc8 sp=0xc0004b3f38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004b3fe0 sp=0xc0004b3fc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004b3fe8 sp=0xc0004b3fe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 25 gp=0xc00017f500 m=nil [GC worker (idle)]:
+runtime.gopark(0x192323ace54?, 0x1?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004b5f38 sp=0xc0004b5f18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004b5fc8 sp=0xc0004b5f38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004b5fe0 sp=0xc0004b5fc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004b5fe8 sp=0xc0004b5fe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 26 gp=0xc00017f6c0 m=nil [GC worker (idle)]:
+runtime.gopark(0x7ff732807000?, 0x1?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004bff38 sp=0xc0004bff18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004bffc8 sp=0xc0004bff38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004bffe0 sp=0xc0004bffc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004bffe8 sp=0xc0004bffe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 27 gp=0xc00017f880 m=nil [GC worker (idle)]:
+runtime.gopark(0x7ff732807000?, 0x1?, 0xd8?, 0x3f?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004c1f38 sp=0xc0004c1f18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004c1fc8 sp=0xc0004c1f38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004c1fe0 sp=0xc0004c1fc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004c1fe8 sp=0xc0004c1fe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 28 gp=0xc00017fa40 m=nil [GC worker (idle)]:
+runtime.gopark(0x19234f76af8?, 0x1?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004bbf38 sp=0xc0004bbf18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004bbfc8 sp=0xc0004bbf38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004bbfe0 sp=0xc0004bbfc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004bbfe8 sp=0xc0004bbfe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 29 gp=0xc00017fc00 m=nil [GC worker (idle)]:
+runtime.gopark(0x19234f76af8?, 0x1?, 0x24?, 0xc7?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004bdf38 sp=0xc0004bdf18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004bdfc8 sp=0xc0004bdf38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004bdfe0 sp=0xc0004bdfc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004bdfe8 sp=0xc0004bdfe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+
+goroutine 30 gp=0xc00017fdc0 m=nil [GC worker (idle)]:
+runtime.gopark(0x19234f76af8?, 0x1?, 0x0?, 0x0?, 0x0?)
+        C:/Program Files/Go/src/runtime/proc.go:435 +0xce fp=0xc0004c7f38 sp=0xc0004c7f18 pc=0x7ff73264a52e
+runtime.gcBgMarkWorker(0xc0000180e0)
+        C:/Program Files/Go/src/runtime/mgc.go:1423 +0xe9 fp=0xc0004c7fc8 sp=0xc0004c7f38 pc=0x7ff7325fdb49
+runtime.gcBgMarkStartWorkers.gowrap1()
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x25 fp=0xc0004c7fe0 sp=0xc0004c7fc8 pc=0x7ff7325fda25
+runtime.goexit({})
+        C:/Program Files/Go/src/runtime/asm_amd64.s:1700 +0x1 fp=0xc0004c7fe8 sp=0xc0004c7fe0 pc=0x7ff732650b81
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+        C:/Program Files/Go/src/runtime/mgc.go:1339 +0x105
+rax     0x0
+rbx     0xc0004c3d18
+rcx     0x50
+rdx     0x0
+rdi     0x61583ff710
+rsi     0x0
+rbp     0x61583ff9d0
+rsp     0x61583ff6e0
+r8      0x1dcd65
+r9      0x61583ff948
+r10     0x0
+r11     0x16367985c20
+r12     0x61583ff770
+r13     0x68c72dba
+r14     0xc0000021c0
+r15     0xb
+rip     0x7ffbaab52ae2
+rflags  0x10202
+cs      0x33
+fs      0x53
+gs      0x2b
+exit status 2
