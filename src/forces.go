@@ -18,7 +18,10 @@ __declspec(dllexport) void applyYoshida(int numParticles, Particle* particles, d
 __declspec(dllexport) void applyForces(int numParticles, Particle* particles, double distance, double theta, double mode);
 */
 import "C"
-import "unsafe"
+import (
+	"fmt"
+	"unsafe"
+)
 
 // Mode is 1.0 for normal, -1.0 for inverse
 // Theta is for the Barnes-Hut Algorithm and is in the config
@@ -31,6 +34,10 @@ func ApplyYoshida(particles []Particle, dt float64, mode float64, config Config)
 	}
 
 	// Get pointer for particles
+	if len(particles) == 0 {
+		fmt.Println("invalid")
+		return particles
+	}
 	particlesPtr := (*C.Particle)(unsafe.Pointer(&particles[0]))
 
 	// Get C Variables
