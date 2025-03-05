@@ -203,16 +203,9 @@ class BarnesHut {
             createChildrenKernel<<<blocks, threads>>>(dBodies, numBodies, dOctantLists, dOctantCounts, mid);
             CUDA_CHECK(cudaDeviceSynchronize());
 
-            // Copy dOctantCounts to CPU
-            int hOctantCounts[8];  // Host-side array
-            CUDA_CHECK(cudaMemcpy(hOctantCounts, dOctantCounts, 8 * sizeof(int), cudaMemcpyDeviceToHost));
-            CUDA_CHECK(cudaDeviceSynchronize());  // Ensure copy is complete before using it
-
             // Create children instances
             for (int i = 0; i < 8; i++) {
-                Particle* hOctantList = (Particle*)malloc(hOctantCounts[i] * sizeof(Particle));
-                CUDA_CHECK(cudaMemcpy(hOctantList, dOctantLists[i], hOctantCounts[i] * sizeof(Particle), cudaMemcpyDeviceToHost));
-                children[i] = new BarnesHut(hOctantCounts[i], hOctantList, octantBounds[i], totalBodies);
+                children[i] = new BarnesHut(dOctantCounts[i], dOctantLists[i], octantBounds[i], totalBodies);
             }
         }
 };
@@ -429,11 +422,11 @@ void stepYoshidaVelocity(int numParticles, Particle* particles, double bounds[3]
 extern "C" { 
     __declspec(dllexport) void applyYoshida(int numParticles, Particle* particles, double distance, double dt, double theta, double mode) {
         // Copy particles to device
-        // Freeing later is not 
         Particle* dParticles;
         CUDA_CHECK(cudaMalloc(&dParticles, numParticles * sizeof(Particle)));
         CUDA_CHECK(cudaMemcpy(dParticles, particles, numParticles * sizeof(Particle), cudaMemcpyHostToDevice));
-        // Create bounds for later
+
+        // Create bounds and copy to device
         double bounds[3][2];
         for (int i = 0; i < 3; i++) {
             bounds[i][0] = 0.0;
