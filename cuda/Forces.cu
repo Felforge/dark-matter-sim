@@ -26,8 +26,8 @@ struct Particle {
 
 //Everything is pre-declared to avoid errors
 class BarnesHut;
-__global__ void createChildrenKernel(Particle* inpBodies, int inpNumBodies, Particle* octantLists[8], int* octantCounts, double mid[3]);
-__global__ void computeForcesKernel(Particle* inpBodies, BarnesHut* tree, double theta, double mode=1.0);
+__global__ void createChildrenKernel(Particle* inpBodies, int inpNumBodies, Particle** octantLists, int* octantCounts, double midX, double midY, double midZ);
+__global__ void computeForcesKernel(Particle* inpBodies, BarnesHut* tree, double theta, double mode);
 
 class BarnesHut {
     public:
@@ -96,7 +96,9 @@ class BarnesHut {
             // Free GPU memory from dBodies
             for (int i = 0; i < 8; i++) {
                 if (children[i] != nullptr) {
-                    delete children[i];
+                    // Call destructor for child
+                    children[i]->~BarnesHut();
+                    CUDA_CHECK(cudaFree(children[i]));
                     children[i] = nullptr;
                 }
             }
@@ -152,6 +154,51 @@ class BarnesHut {
             return true;
         }
 
+        // Create children subtree
+        void createChildren() {
+            // Split into octants
+            // Using individual values as scalars are auto-copied to device
+            double midX = (bounds[0][0] + bounds[0][1]) / 2;
+            double midY = (bounds[1][0] + bounds[1][1]) / 2;
+            double midZ = (bounds[2][0] + bounds[2][1]) / 2;
+
+            // Define new bounds of octants
+            for (int i = 0; i < 8; i++) { 
+                // for (int j = 0; j < 3; j++) {
+                //     octantBounds[i][j][0] = ((i >> j) & 1) ? mid[j] : bounds[j][0];
+                //     octantBounds[i][j][1] = ((i >> j) & 1) ? bounds[j][1] : mid[j];
+                // }
+                octantBounds[i][0][0] = ((i >> 0) & 1) ? midX : bounds[0][0];
+                octantBounds[i][0][1] = ((i >> 0) & 1) ? bounds[0][1] : midX;
+                octantBounds[i][1][0] = ((i >> 1) & 1) ? midY : bounds[1][0];
+                octantBounds[i][1][1] = ((i >> 1) & 1) ? bounds[1][1] : midY;
+                octantBounds[i][2][0] = ((i >> 2) & 1) ? midZ : bounds[2][0];
+                octantBounds[i][2][1] = ((i >> 2) & 1) ? bounds[2][1] : midZ;
+            }
+
+            // Allocate memory for octant lists
+            CUDA_CHECK(cudaMallocManaged(&dOctantLists, 8 * sizeof(Particle*)));
+            for (int i = 0; i < 8; i++) {
+                CUDA_CHECK(cudaMallocManaged(&dOctantLists[i], numBodies * sizeof(Particle)));
+            }
+
+            // Allocate memory for counters
+            CUDA_CHECK(cudaMallocManaged(&dOctantCounts, 8 * sizeof(int)));
+            CUDA_CHECK(cudaMemset(dOctantCounts, 0, 8 * sizeof(int)));
+
+            // Launch CUDA Kernel
+            int threads = 256;
+            int blocks = (numBodies + threads - 1) / threads;
+            createChildrenKernel<<<blocks, threads>>>(dBodies, numBodies, dOctantLists, dOctantCounts, midX, midY, midZ);
+            CUDA_CHECK(cudaDeviceSynchronize());
+
+            // Create children instances
+            for (int i = 0; i < 8; i++) {
+                CUDA_CHECK(cudaMallocManaged(&children[i], sizeof(BarnesHut)));
+                new (children[i]) BarnesHut(dOctantCounts[i], dOctantLists[i], octantBounds[i], totalBodies);
+            }
+        }
+
         void constructTree(Particle* inpBodies, int inpNumBodies) {
             if (inpNumBodies == 0) {
                 return;
@@ -170,44 +217,6 @@ class BarnesHut {
                 createChildren();
             }
         }
-
-        // Create children subtree
-        void createChildren() {
-            // Split into octants
-            double mid[3];
-            for (int i = 0; i < 3; i++) {
-                mid[i] = (bounds[i][0] + bounds[i][1]) / 2;
-            }
-
-            // Define new bounds of octants
-            for (int i = 0; i < 8; i++) { 
-                for (int j = 0; j < 3; j++) {
-                    octantBounds[i][j][0] = ((i >> j) & 1) ? mid[j] : bounds[j][0];
-                    octantBounds[i][j][1] = ((i >> j) & 1) ? bounds[j][1] : mid[j];
-                }
-            }
-
-            // Allocate memory for octant lists
-            CUDA_CHECK(cudaMallocManaged(&dOctantLists, 8 * sizeof(Particle*)));
-            for (int i = 0; i < 8; i++) {
-                CUDA_CHECK(cudaMallocManaged(&dOctantLists[i], numBodies * sizeof(Particle)));
-            }
-
-            // Allocate memory for counters
-            CUDA_CHECK(cudaMallocManaged(&dOctantCounts, 8 * sizeof(int)));
-            CUDA_CHECK(cudaMemset(dOctantCounts, 0, 8 * sizeof(int)));
-
-            // Launch CUDA Kernel
-            int threads = 256;
-            int blocks = (numBodies + threads - 1) / threads;
-            createChildrenKernel<<<blocks, threads>>>(dBodies, numBodies, dOctantLists, dOctantCounts, mid);
-            CUDA_CHECK(cudaDeviceSynchronize());
-
-            // Create children instances
-            for (int i = 0; i < 8; i++) {
-                children[i] = new BarnesHut(dOctantCounts[i], dOctantLists[i], octantBounds[i], totalBodies);
-            }
-        }
 };
 
 // Needed inside and outside the class
@@ -219,7 +228,7 @@ __host__ __device__ double getDistance(double x1, double y1, double z1, double x
 }
 
 // CUDA Kernel to sort particles
-__global__ void createChildrenKernel(Particle* inpBodies, int inpNumBodies, Particle* octantLists[8], int* octantCounts, double mid[3]) {
+__global__ void createChildrenKernel(Particle* inpBodies, int inpNumBodies, Particle** octantLists, int* octantCounts, double midX, double midY, double midZ) {
     // Calculate the global thread index
     // Each thread gets a unique "idx" to work on a different particle
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
@@ -231,15 +240,15 @@ __global__ void createChildrenKernel(Particle* inpBodies, int inpNumBodies, Part
     Particle& particle = inpBodies[idx];
 
     int octant = 0;
-    if (particle.X > mid[0]) {
+    if (particle.X > midX) {
         // Set first bit to 1
         octant |= 1;
     }
-    if (particle.Y > mid[1]) {
+    if (particle.Y > midY) {
         // Set second bit to 1
         octant |= 2;
     }
-    if (particle.Z > mid[2]) {
+    if (particle.Z > midZ) {
         // Set 3rd bit to 1
         octant |= 4;
     }
@@ -403,7 +412,9 @@ void stepYoshidaPosition(int numParticles, Particle* particles, double distance,
 // Step Yoshida Velocity
 void stepYoshidaVelocity(int numParticles, Particle* particles, double bounds[3][2], double dt, double multiplier, double theta, double mode, int threads, int blocks) {
     // BarnesHut takes the host particles object
-    BarnesHut* tree = new BarnesHut(numParticles, particles, bounds);
+    BarnesHut* tree;
+    CUDA_CHECK(cudaMallocManaged(&tree, sizeof(BarnesHut)));
+    new (tree) BarnesHut(numParticles, particles, bounds);
     tree->computeForces(theta, mode);
 
     // Delete tree
@@ -485,8 +496,9 @@ extern "C" {
         }
 
         // Create Barnes-Hut tree and calculate particle accelerations
-        BarnesHut* tree = new BarnesHut(numParticles, dParticles, bounds);
-        tree->computeForces(theta, mode);
+        BarnesHut* tree;
+        CUDA_CHECK(cudaMallocManaged(&tree, sizeof(BarnesHut)));
+        new (tree) BarnesHut(numParticles, particles, bounds);
 
         // Delete tree
         delete tree;

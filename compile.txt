@@ -1,2 +1,8 @@
 nvcc --shared -o libs/GetTimeStep.dll cuda/GetTimeStep.cu  -lcudart -Xcompiler /MD
 nvcc --shared -o libs/Forces.dll cuda/Forces.cu  -lcudart -Xcompiler /MD
+
+Del "libs\Forces.dll" "libs\Forces.exp" "libs\Forces.lib"
+
+go run forces.go getTimeStep.go loadConfig.go main.go setup.go
+
+compute-sanitizer --tool=memcheck ./loadConfig.exe
